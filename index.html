@@ -83,6 +83,9 @@
     // Store functions for tab-specific actions
     let categorizeLoadFunctions = null;
 
+    // Store Telegram WebApp instance for haptic feedback
+    let tgWebApp = null;
+
     // Tab switching functionality
     function initTabs() {
         const tabItems = document.querySelectorAll('.tab-item');
@@ -91,6 +94,18 @@
         tabItems.forEach(item => {
             item.addEventListener('click', () => {
                 const tabIndex = item.getAttribute('data-tab');
+                
+                // Haptic feedback when clicking tab
+                if (tgWebApp && tgWebApp.HapticFeedback) {
+                    try {
+                        tgWebApp.HapticFeedback.impactOccurred('light');
+                    } catch (e) {
+                        // Fallback if HapticFeedback not available
+                        if (tgWebApp.impactOccurred) {
+                            tgWebApp.impactOccurred('light');
+                        }
+                    }
+                }
                 
                 // Remove active class from all tabs and contents
                 tabItems.forEach(t => t.classList.remove('active'));
@@ -155,6 +170,9 @@
     } else {
         const tg = Telegram.WebApp;
         tg.ready();
+        
+        // Store Telegram WebApp instance for haptic feedback in tabs
+        tgWebApp = tg;
 
         async function loadData() {
             try {
