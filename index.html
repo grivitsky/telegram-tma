@@ -9,43 +9,75 @@
     const tg = Telegram.WebApp;
     tg.ready();
 
+    const monthEl = document.getElementById('month');
+    const totalEl = document.getElementById('total');
+    const listEl  = document.getElementById('transactions');
+
+    function setError(msg) {
+        totalEl.innerText = 'Error: ' + msg;
+    }
+
     async function loadData() {
         try {
+            if (!tg.initData) {
+                setError('Open inside Telegram');
+                console.warn('No initData — likely opened outside Telegram WebApp.');
+                return;
+            }
+
+            const now = new Date();
+            monthEl.innerText = now.toLocaleString('default', { month: 'long' });
+
+            console.log('➡️ Fetching /api/spendings/list');
             const res = await fetch('/api/spendings/list', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ initData: tg.initData }),
+                body: JSON.stringify({ initData: tg.initData })
             });
+
+            console.log('⬅️ Response status:', res.status);
             const data = await res.json();
-            if (!data.ok) throw new Error(data.error);
+            console.log('⬅️ Response body:', data);
 
-            const now = new Date();
-            document.getElementById('month').innerText = now.toLocaleString('default', { month: 'long' });
-            document.getElementById('total').innerText = `${data.total.toFixed(2)} spent`;
+            if (!data.ok) {
+                setError(data.error || 'Unknown API error');
+                return;
+            }
 
-            const container = document.getElementById('transactions');
-            container.innerHTML = '';
+            totalEl.innerText = `${Number(data.total).toFixed(2)} spent`;
+
+            listEl.innerHTML = '';
             for (const s of data.spendings) {
                 const item = document.createElement('div');
                 item.className = 'transaction';
                 item.innerHTML = `
-            <div class="icon"></div>
-            <div class="info">
-              <div class="name">${s.name}</div>
-              <div class="date">${new Date(s.created_at).toLocaleDateString()}</div>
-            </div>
-            <div class="amount">${Number(s.amount).toFixed(2)}</div>
-          `;
-                container.appendChild(item);
+          <div class="icon"></div>
+          <div class="info">
+            <div class="name">${s.name}</div>
+            <div class="date">${new Date(s.created_at).toLocaleDateString()}</div>
+          </div>
+          <div class="amount">${Number(s.amount).toFixed(2)}</div>
+        `;
+                listEl.appendChild(item);
+            }
+
+            if (!data.spendings.length) {
+                const empty = document.createElement('div');
+                empty.style.opacity = '0.7';
+                empty.style.fontSize = '14px';
+                empty.style.marginTop = '8px';
+                empty.innerText = 'No transactions yet this month.';
+                listEl.appendChild(empty);
             }
         } catch (err) {
-            console.error(err);
-            document.getElementById('total').innerText = 'Error loading data';
+            console.error('loadData error', err);
+            setError('Network or script error (see console)');
         }
     }
 
     loadData();
 </script>
+
 
 <style>
     body {
