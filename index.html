@@ -8,18 +8,48 @@
 </head>
 <body>
 <div id="app">
-    <h1 id="month"></h1>
-    <div id="total">Loading...</div>
+    <div id="header">
+        <div id="header-top">
+            <span id="net-total-label">Net total</span>
+            <span id="month-pill">this month</span>
+        </div>
+        <div id="total">Loading...</div>
+    </div>
     <div id="transactions"></div>
 </div>
 
 <script>
-    const monthEl = document.getElementById('month');
     const totalEl = document.getElementById('total');
     const listEl  = document.getElementById('transactions');
 
     function setError(msg) {
-        totalEl.innerText = 'Error: ' + msg;
+        totalEl.innerHTML = '<span class="currency-label">Error:</span> <span class="amount-value">' + msg + '</span>';
+    }
+
+    function formatDateHeader(date) {
+        const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        const dayName = days[date.getDay()];
+        const day = date.getDate();
+        const month = months[date.getMonth()];
+        return `${dayName}, ${day} ${month}`;
+    }
+
+    function formatTime(date) {
+        let hours = date.getHours();
+        const minutes = date.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        const minutesStr = minutes.toString().padStart(2, '0');
+        return `${hours}:${minutesStr} ${ampm}`;
+    }
+
+    function formatAmount(amount) {
+        const absAmount = Math.abs(amount);
+        const parts = absAmount.toFixed(2).split('.');
+        const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        return `${parts[1] ? integerPart + ',' + parts[1] : integerPart}`;
     }
 
     // Check if Telegram WebApp SDK is available
@@ -38,9 +68,6 @@
                     return;
                 }
 
-                const now = new Date();
-                monthEl.innerText = now.toLocaleString('default', { month: 'long' });
-
                 console.log('➡️ Fetching /api/spendings/list');
                 const res = await fetch('/api/spendings/list', {
                     method: 'POST',
@@ -57,30 +84,80 @@
                     return;
                 }
 
-                totalEl.innerText = `${Number(data.total).toFixed(2)} spent`;
+                // Format total amount
+                const total = Number(data.total);
+                totalEl.innerHTML = `
+                    <span class="currency-label">-PLN</span>
+                    <span class="amount-value">${formatAmount(total)}</span>
+                `;
 
-                listEl.innerHTML = '';
+                // Group spendings by date
+                const groupedByDate = {};
                 for (const s of data.spendings) {
-                    const item = document.createElement('div');
-                    item.className = 'transaction';
-                    item.innerHTML = `
-          <div class="icon"></div>
-          <div class="info">
-            <div class="name">${s.name}</div>
-            <div class="date">${new Date(s.created_at).toLocaleDateString()}</div>
-          </div>
-          <div class="amount">${Number(s.amount).toFixed(2)}</div>
-        `;
-                    listEl.appendChild(item);
+                    const date = new Date(s.created_at || s.date_of_log);
+                    const dateKey = date.toDateString();
+                    if (!groupedByDate[dateKey]) {
+                        groupedByDate[dateKey] = [];
+                    }
+                    groupedByDate[dateKey].push(s);
                 }
 
-                if (!data.spendings.length) {
+                // Sort dates descending
+                const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
+                    return new Date(b) - new Date(a);
+                });
+
+                listEl.innerHTML = '';
+                
+                if (sortedDates.length === 0) {
                     const empty = document.createElement('div');
-                    empty.style.opacity = '0.7';
-                    empty.style.fontSize = '14px';
-                    empty.style.marginTop = '8px';
+                    empty.className = 'empty-state';
                     empty.innerText = 'No transactions yet this month.';
                     listEl.appendChild(empty);
+                } else {
+                    for (const dateKey of sortedDates) {
+                        const date = new Date(dateKey);
+                        const transactions = groupedByDate[dateKey];
+                        
+                        // Calculate daily subtotal
+                        const dailyTotal = transactions.reduce((sum, t) => sum + Number(t.amount || 0), 0);
+                        
+                        // Create date group container
+                        const dateGroup = document.createElement('div');
+                        dateGroup.className = 'date-group';
+                        
+                        // Date header
+                        const dateHeader = document.createElement('div');
+                        dateHeader.className = 'date-header';
+                        dateHeader.innerHTML = `
+                            <span class="date-label">${formatDateHeader(date)}</span>
+                            <span class="daily-subtotal">-${formatAmount(dailyTotal)} PLN</span>
+                        `;
+                        dateGroup.appendChild(dateHeader);
+                        
+                        // Date divider
+                        const divider = document.createElement('div');
+                        divider.className = 'date-divider';
+                        dateGroup.appendChild(divider);
+                        
+                        // Transactions for this date
+                        for (const s of transactions) {
+                            const item = document.createElement('div');
+                            item.className = 'transaction';
+                            const transDate = new Date(s.created_at || s.date_of_log);
+                            item.innerHTML = `
+                                <div class="icon"></div>
+                                <div class="info">
+                                    <div class="name">${s.name}</div>
+                                    <div class="time">${formatTime(transDate)}</div>
+                                </div>
+                                <div class="amount">-${formatAmount(Number(s.amount))} PLN</div>
+                            `;
+                            dateGroup.appendChild(item);
+                        }
+                        
+                        listEl.appendChild(dateGroup);
+                    }
                 }
             } catch (err) {
                 console.error('loadData error', err);
@@ -94,62 +171,145 @@
 
 
 <style>
-    body {
-        font-family: system-ui, sans-serif;
-        background: var(--tg-theme-bg-color);
-        color: var(--tg-theme-text-color);
-        margin: 0;
-        padding: 20px;
+    * {
+        box-sizing: border-box;
     }
 
-    #month {
-        font-size: 24px;
-        font-weight: 600;
-        margin-bottom: 4px;
+    body {
+        font-family: system-ui, -apple-system, sans-serif;
+        background: #ffffff;
+        color: #000000;
+        margin: 0;
+        padding: 0;
+    }
+
+    #app {
+        padding: 20px;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    #header {
+        margin-bottom: 32px;
+    }
+
+    #header-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    #net-total-label {
+        font-size: 16px;
+        font-weight: 400;
+        color: #000000;
+    }
+
+    #month-pill {
+        font-size: 14px;
+        font-weight: 400;
+        color: #000000;
+        background: #f5f5f5;
+        border: 1px solid #e0e0e0;
+        padding: 4px 10px;
+        border-radius: 12px;
     }
 
     #total {
-        font-size: 36px;
+        font-size: 42px;
         font-weight: 700;
-        margin-bottom: 24px;
+        line-height: 1.2;
+    }
+
+    #total .currency-label {
+        color: #999999;
+        font-weight: 400;
+        font-size: 32px;
+    }
+
+    #total .amount-value {
+        color: #000000;
+        font-weight: 700;
+    }
+
+    .date-group {
+        margin-bottom: 32px;
+    }
+
+    .date-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .date-label {
+        font-size: 14px;
+        color: #999999;
+        font-weight: 400;
+    }
+
+    .daily-subtotal {
+        font-size: 14px;
+        color: #999999;
+        font-weight: 400;
+    }
+
+    .date-divider {
+        height: 1px;
+        background: #e0e0e0;
+        margin-bottom: 12px;
     }
 
     .transaction {
         display: flex;
         align-items: center;
-        background: var(--tg-theme-secondary-bg-color, #f5f5f5);
-        padding: 10px 14px;
-        border-radius: 14px;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
     }
 
     .icon {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         background: purple;
-        border-radius: 5px;
+        border-radius: 6px;
         margin-right: 12px;
+        flex-shrink: 0;
     }
 
     .info {
         flex-grow: 1;
         display: flex;
         flex-direction: column;
+        min-width: 0;
     }
 
     .name {
         font-size: 16px;
-        font-weight: 600;
+        font-weight: 400;
+        color: #000000;
+        margin-bottom: 2px;
     }
 
-    .date {
-        font-size: 12px;
-        color: #888;
+    .time {
+        font-size: 14px;
+        color: #999999;
+        font-weight: 400;
     }
 
     .amount {
-        font-weight: 600;
+        font-weight: 400;
         font-size: 16px;
+        color: #000000;
+        white-space: nowrap;
+        margin-left: 12px;
+    }
+
+    .empty-state {
+        text-align: center;
+        color: #999999;
+        font-size: 14px;
+        padding: 40px 20px;
     }
 </style>
 </body>
