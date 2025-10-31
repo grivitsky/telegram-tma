@@ -23,9 +23,15 @@
         
         <!-- Tab 2 Content (Categorize) -->
         <div class="tab-content" data-tab="1">
-            <div class="tab-placeholder">
-                <h2>Categorize</h2>
-                <p>Content coming soon...</p>
+            <div id="categorize-container">
+                <div id="categorize-transaction" class="categorize-transaction"></div>
+                <div id="categorize-categories">
+                    <div id="categorize-label" style="display: none;">Select Category</div>
+                    <div id="categorize-buttons" class="categorize-buttons"></div>
+                </div>
+                <div id="categorize-complete" class="categorize-complete" style="display: none;">
+                    <h2>We're all set</h2>
+                </div>
             </div>
         </div>
         
@@ -249,6 +255,151 @@
         }
 
         loadData();
+
+        // Categorize functionality
+        let uncategorizedSpendings = [];
+        let categories = [];
+        let currentSpendingIndex = 0;
+
+        const categorizeContainer = document.getElementById('categorize-container');
+        const categorizeTransaction = document.getElementById('categorize-transaction');
+        const categorizeButtons = document.getElementById('categorize-buttons');
+        const categorizeLabel = document.getElementById('categorize-label');
+        const categorizeComplete = document.getElementById('categorize-complete');
+
+        async function loadUncategorizedSpendings() {
+            try {
+                const res = await fetch('/api/spendings/uncategorized', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ initData: tg.initData })
+                });
+
+                const data = await res.json();
+                if (!data.ok) {
+                    console.error('Failed to load uncategorized spendings:', data.error);
+                    return;
+                }
+
+                uncategorizedSpendings = data.spendings || [];
+                currentSpendingIndex = 0;
+                displayNextTransaction();
+            } catch (err) {
+                console.error('loadUncategorizedSpendings error', err);
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const res = await fetch('/api/categories/list', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ initData: tg.initData })
+                });
+
+                const data = await res.json();
+                if (!data.ok) {
+                    console.error('Failed to load categories:', data.error);
+                    return;
+                }
+
+                categories = data.categories || [];
+                renderCategoryButtons();
+            } catch (err) {
+                console.error('loadCategories error', err);
+            }
+        }
+
+        function renderCategoryButtons() {
+            categorizeButtons.innerHTML = '';
+            categories.forEach(category => {
+                const button = document.createElement('button');
+                button.className = 'category-button';
+                button.style.backgroundColor = category.color;
+                button.innerHTML = `
+                    <span class="category-emoji">${category.emoji}</span>
+                    <span class="category-name">${category.name}</span>
+                `;
+                button.addEventListener('click', () => assignCategory(category.id));
+                categorizeButtons.appendChild(button);
+            });
+        }
+
+        function displayNextTransaction() {
+            if (currentSpendingIndex >= uncategorizedSpendings.length) {
+                // All transactions categorized
+                categorizeTransaction.style.display = 'none';
+                categorizeButtons.style.display = 'none';
+                categorizeLabel.style.display = 'none';
+                categorizeComplete.style.display = 'block';
+                return;
+            }
+
+            const spending = uncategorizedSpendings[currentSpendingIndex];
+            const transDate = new Date(spending.created_at || spending.date_of_log);
+            
+            categorizeTransaction.innerHTML = `
+                <div class="categorize-transaction-item">
+                    <div class="icon" style="background-color: #9E9E9E">
+                        <span class="icon-emoji">❓</span>
+                    </div>
+                    <div class="info">
+                        <div class="name">${spending.name}</div>
+                        <div class="time">${formatTime(transDate)}</div>
+                    </div>
+                    <div class="amount">-${formatAmount(Number(spending.amount))} PLN</div>
+                </div>
+            `;
+
+            categorizeTransaction.style.display = 'block';
+            categorizeButtons.style.display = 'flex';
+            categorizeLabel.style.display = 'block';
+            categorizeComplete.style.display = 'none';
+        }
+
+        async function assignCategory(categoryId) {
+            const spending = uncategorizedSpendings[currentSpendingIndex];
+            
+            try {
+                const res = await fetch('/api/spendings/update-category', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        initData: tg.initData,
+                        spendingId: spending.id,
+                        categoryId: categoryId
+                    })
+                });
+
+                const data = await res.json();
+                if (!data.ok) {
+                    console.error('Failed to update category:', data.error);
+                    return;
+                }
+
+                // Move to next transaction
+                currentSpendingIndex++;
+                displayNextTransaction();
+            } catch (err) {
+                console.error('assignCategory error', err);
+            }
+        }
+
+        // Load categorize data when tab is switched to categorize
+        const categorizeTab = document.querySelector('.tab-item[data-tab="1"]');
+        if (categorizeTab) {
+            categorizeTab.addEventListener('click', () => {
+                loadUncategorizedSpendings();
+                loadCategories();
+            });
+        }
+
+        // Also load on initial page load if categorize tab is active (unlikely but safe)
+        const categorizeTabContent = document.querySelector('.tab-content[data-tab="1"]');
+        if (categorizeTabContent && categorizeTabContent.classList.contains('active')) {
+            loadUncategorizedSpendings();
+            loadCategories();
+        }
     }
 </script>
 
@@ -484,6 +635,95 @@
     .tab-label {
         font-size: 11px;
         font-weight: 400;
+        color: #000000;
+    }
+
+    /* Categorize Tab Styles */
+    #categorize-container {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        min-height: 60vh;
+    }
+
+    .categorize-transaction {
+        margin-bottom: 40px;
+    }
+
+    .categorize-transaction-item {
+        display: flex;
+        align-items: center;
+        background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+        padding: 16px;
+        border-radius: 14px;
+    }
+
+    #categorize-categories {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #categorize-label {
+        font-size: 18px;
+        font-weight: 600;
+        color: #000000;
+        margin-bottom: 16px;
+        text-align: center;
+    }
+
+    .categorize-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
+        align-items: flex-start;
+    }
+
+    .category-button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 16px 20px;
+        border-radius: 14px;
+        border: none;
+        cursor: pointer;
+        min-width: 100px;
+        transition: transform 0.1s, opacity 0.1s;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .category-button:active {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+
+    .category-emoji {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
+
+    .category-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #000000;
+        text-transform: capitalize;
+    }
+
+    .categorize-complete {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .categorize-complete h2 {
+        font-size: 24px;
+        font-weight: 600;
         color: #000000;
     }
 </style>
