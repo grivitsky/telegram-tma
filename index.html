@@ -8,19 +8,94 @@
 </head>
 <body>
 <div id="app">
-    <div id="header">
-        <div id="header-top">
-            <span id="net-total-label">Net total</span>
-            <span id="month-pill">this month</span>
+    <div id="content">
+        <!-- Tab 1 Content (Spendings) -->
+        <div class="tab-content active" data-tab="0">
+            <div id="header">
+                <div id="header-top">
+                    <span id="net-total-label">Net total</span>
+                    <span id="month-pill">this month</span>
+                </div>
+                <div id="total">Loading...</div>
+            </div>
+            <div id="transactions"></div>
         </div>
-        <div id="total">Loading...</div>
+        
+        <!-- Tab 2 Content -->
+        <div class="tab-content" data-tab="1">
+            <div class="tab-placeholder">
+                <h2>Tab 2</h2>
+                <p>Content coming soon...</p>
+            </div>
+        </div>
+        
+        <!-- Tab 3 Content -->
+        <div class="tab-content" data-tab="2">
+            <div class="tab-placeholder">
+                <h2>Tab 3</h2>
+                <p>Content coming soon...</p>
+            </div>
+        </div>
+        
+        <!-- Tab 4 Content -->
+        <div class="tab-content" data-tab="3">
+            <div class="tab-placeholder">
+                <h2>Tab 4</h2>
+                <p>Content coming soon...</p>
+            </div>
+        </div>
     </div>
-    <div id="transactions"></div>
+    
+    <!-- Tab Bar -->
+    <div id="tab-bar">
+        <div class="tab-item active" data-tab="0">
+            <span class="tab-icon">📊</span>
+            <span class="tab-label">Spendings</span>
+        </div>
+        <div class="tab-item" data-tab="1">
+            <span class="tab-icon">📈</span>
+            <span class="tab-label">Stats</span>
+        </div>
+        <div class="tab-item" data-tab="2">
+            <span class="tab-icon">➕</span>
+            <span class="tab-label">Add</span>
+        </div>
+        <div class="tab-item" data-tab="3">
+            <span class="tab-icon">⚙️</span>
+            <span class="tab-label">Settings</span>
+        </div>
+    </div>
 </div>
 
 <script>
     const totalEl = document.getElementById('total');
     const listEl  = document.getElementById('transactions');
+
+    // Tab switching functionality
+    function initTabs() {
+        const tabItems = document.querySelectorAll('.tab-item');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const tabIndex = item.getAttribute('data-tab');
+                
+                // Remove active class from all tabs and contents
+                tabItems.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                item.classList.add('active');
+                const activeContent = document.querySelector(`.tab-content[data-tab="${tabIndex}"]`);
+                if (activeContent) {
+                    activeContent.classList.add('active');
+                }
+            });
+        });
+    }
+
+    // Initialize tabs on load
+    initTabs();
 
     function setError(msg) {
         totalEl.innerHTML = '<span class="currency-label">Error:</span> <span class="amount-value">' + msg + '</span>';
@@ -189,19 +264,54 @@
         color: #000000;
         margin: 0;
         padding: 0;
+        padding-bottom: 80px; /* Space for tab bar */
     }
 
     #app {
-        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
         max-width: 600px;
         margin: 0 auto;
+        position: relative;
+    }
+
+    #content {
+        flex: 1;
+        padding: 20px;
+        padding-bottom: 100px;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .tab-placeholder {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999999;
+    }
+
+    .tab-placeholder h2 {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #000000;
+    }
+
+    .tab-placeholder p {
+        font-size: 16px;
     }
 
     #header {
         margin-bottom: 32px;
         text-align: center;
-        padding-top: 24px;
-        padding-bottom: 24px;
+        padding-top: 10vh;
+        padding-bottom: 10vh;
     }
 
     #header-top {
@@ -282,8 +392,8 @@
     }
 
     .icon {
-        width: 60px;
-        height: 60px;
+        width: 56px;
+        height: 56px;
         background: purple;
         border-radius: 8px;
         margin-right: 12px;
@@ -294,7 +404,7 @@
     }
 
     .icon-emoji {
-        font-size: 32px;
+        font-size: 28px;
         line-height: 1;
     }
 
@@ -306,7 +416,7 @@
     }
 
     .name {
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 600;
         color: #000000;
         margin-bottom: 2px;
@@ -319,8 +429,8 @@
     }
 
     .amount {
-        font-weight: 300;
-        font-size: 16px;
+        font-weight: 600;
+        font-size: 18px;
         color: #000000;
         white-space: nowrap;
         margin-left: 12px;
@@ -331,6 +441,50 @@
         color: #999999;
         font-size: 14px;
         padding: 40px 20px;
+    }
+
+    #tab-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 8px 0;
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+        z-index: 1000;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .tab-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        padding: 8px 4px;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        opacity: 0.5;
+    }
+
+    .tab-item.active {
+        opacity: 1;
+    }
+
+    .tab-icon {
+        font-size: 24px;
+        margin-bottom: 4px;
+    }
+
+    .tab-label {
+        font-size: 11px;
+        font-weight: 400;
+        color: #000000;
     }
 </style>
 </body>
