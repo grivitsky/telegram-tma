@@ -49,9 +49,8 @@
             const data = await res.json();
 
             if (data.ok && data.user) {
-                const user = JSON.parse(data.user);
                 document.getElementById('status').innerHTML =
-                    '✅ hello, <b>' + user.first_name + '</b>';
+                    '✅ hello, <b>' + (data.user.first_name || 'friend') + '</b>';
             } else {
                 document.getElementById('status').innerText =
                     '❌ Auth failed: ' + (data.error || 'unknown');
