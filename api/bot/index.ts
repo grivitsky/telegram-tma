@@ -8,8 +8,8 @@ bot.start((ctx) =>
         'Welcome! Click below to open the Mini App:',
         Markup.keyboard([
             [Markup.button.webApp('Open Mini App', process.env.MINI_APP_URL!)],
-]).resize()
-)
+        ]).resize()
+    )
 );
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

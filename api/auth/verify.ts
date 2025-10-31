@@ -34,51 +34,76 @@ function isValid(initData: string, botToken: string) {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    const initData = req.body?.initData;
-    if (!initData)
-        return res.status(400).json({ ok: false, error: 'Missing initData' });
+    console.log('🔹 Incoming request to /api/auth/verify');
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
 
-    const valid = isValid(initData, process.env.BOT_TOKEN!);
-    if (!valid) return res.status(401).json({ ok: false, error: 'Invalid hash' });
-
-    const params = new URLSearchParams(initData);
-    const userRaw = params.get('user');
-    if (!userRaw) return res.status(400).json({ ok: false, error: 'No user data' });
-
-    const user = JSON.parse(userRaw);
-
-    // create or get user from supabase
-    const { data: existing, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('telegram_id', user.id)
-        .maybeSingle();
-
-    if (error) {
-        console.error(error);
-        return res.status(500).json({ ok: false, error: 'Supabase error' });
-    }
-
-    let dbUser = existing;
-    if (!dbUser) {
-        const { data: newUser, error: insertError } = await supabase
-            .from('users')
-            .insert([
-                {
-                    telegram_id: user.id,
-                    first_name: user.first_name,
-                    username: user.username,
-                },
-            ])
-            .select()
-            .single();
-
-        if (insertError) {
-            console.error(insertError);
-            return res.status(500).json({ ok: false, error: 'Create user failed' });
+    try {
+        const initData = req.body?.initData;
+        if (!initData) {
+            console.log('❌ Missing initData');
+            return res.status(400).json({ ok: false, error: 'Missing initData' });
         }
-        dbUser = newUser;
-    }
 
-    return res.status(200).json({ ok: true, user: dbUser });
+        const valid = isValid(initData, process.env.BOT_TOKEN!);
+        console.log('Validation result:', valid);
+
+        if (!valid) {
+            console.log('❌ Invalid hash');
+            return res.status(401).json({ ok: false, error: 'Invalid hash' });
+        }
+
+        const params = new URLSearchParams(initData);
+        const userRaw = params.get('user');
+        if (!userRaw) {
+            console.log('❌ No user in initData');
+            return res.status(400).json({ ok: false, error: 'No user data' });
+        }
+
+        const user = JSON.parse(userRaw);
+        console.log('✅ Telegram user:', user);
+
+        // Supabase logic
+        console.log('🔹 Checking Supabase...');
+        const { data: existing, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('telegram_id', user.id)
+            .maybeSingle();
+
+        if (error) {
+            console.error('❌ Supabase select error:', error);
+            return res.status(500).json({ ok: false, error: 'Supabase select error' });
+        }
+
+        let dbUser = existing;
+        if (!dbUser) {
+            console.log('🆕 Creating new user in Supabase...');
+            const { data: newUser, error: insertError } = await supabase
+                .from('users')
+                .insert([
+                    {
+                        telegram_id: user.id,
+                        username: user.username,
+                        first_name: user.first_name,
+                    },
+                ])
+                .select()
+                .single();
+
+            if (insertError) {
+                console.error('❌ Supabase insert error:', insertError);
+                return res
+                    .status(500)
+                    .json({ ok: false, error: 'Supabase insert error' });
+            }
+            dbUser = newUser;
+        }
+
+        console.log('✅ Success! Returning user:', dbUser);
+        return res.status(200).json({ ok: true, user: dbUser });
+    } catch (e: any) {
+        console.error('💥 API crash:', e);
+        return res.status(500).json({ ok: false, error: e.message });
+    }
 }
