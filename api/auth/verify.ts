@@ -8,7 +8,7 @@ const supabase = createClient(
 );
 
 function buildDataCheckString(params: URLSearchParams) {
-    const pairs = [];
+    const pairs: string[] = [];
     for (const [key, value] of Array.from(params.entries())
         .filter(([k]) => k !== 'hash')
         .sort()) {
@@ -63,8 +63,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const user = JSON.parse(userRaw);
         console.log('✅ Telegram user:', user);
 
-        // Supabase logic
-        console.log('🔹 Checking Supabase...');
         const { data: existing, error } = await supabase
             .from('users')
             .select('*')
@@ -85,17 +83,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     {
                         telegram_id: user.id,
                         username: user.username,
-                        first_name: user.first_name,
-                    },
+                        first_name: user.first_name
+                    }
                 ])
                 .select()
                 .single();
 
             if (insertError) {
                 console.error('❌ Supabase insert error:', insertError);
-                return res
-                    .status(500)
-                    .json({ ok: false, error: 'Supabase insert error' });
+                return res.status(500).json({ ok: false, error: 'Supabase insert error' });
             }
             dbUser = newUser;
         }
