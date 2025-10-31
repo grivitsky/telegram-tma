@@ -72,12 +72,25 @@ bot.on('text', async (ctx) => {
             return ctx.reply('❌ Could not find your user in database.');
         }
 
-        // insert spending
+        // get "undefined" category
+        const { data: category, error: categoryError } = await supabase
+            .from('categories')
+            .select('id')
+            .eq('name', 'undefined')
+            .maybeSingle();
+
+        if (categoryError) {
+            console.error('Category lookup error:', categoryError);
+            return ctx.reply('❌ Could not find category in database.');
+        }
+
+        // insert spending with undefined category
         const { error: insertError } = await supabase.from('spendings').insert([
             {
                 user_id: dbUser.id,
                 amount,
-                name
+                name,
+                category_id: category?.id || null
             }
         ]);
 

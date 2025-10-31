@@ -145,8 +145,16 @@
                             const item = document.createElement('div');
                             item.className = 'transaction';
                             const transDate = new Date(s.created_at || s.date_of_log);
+                            
+                            // Get category info (handle both direct category object and nested categories object)
+                            const category = s.categories || s.category || null;
+                            const emoji = category?.emoji || '❓';
+                            const color = category?.color || '#9E9E9E';
+                            
                             item.innerHTML = `
-                                <div class="icon"></div>
+                                <div class="icon" style="background-color: ${color}">
+                                    <span class="icon-emoji">${emoji}</span>
+                                </div>
                                 <div class="info">
                                     <div class="name">${s.name}</div>
                                     <div class="time">${formatTime(transDate)}</div>
@@ -191,11 +199,13 @@
 
     #header {
         margin-bottom: 32px;
+        text-align: center;
     }
 
     #header-top {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
         margin-bottom: 8px;
     }
@@ -220,6 +230,7 @@
         font-size: 42px;
         font-weight: 700;
         line-height: 1.2;
+        text-align: center;
     }
 
     #total .currency-label {
@@ -275,6 +286,14 @@
         border-radius: 6px;
         margin-right: 12px;
         flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .icon-emoji {
+        font-size: 14px;
+        line-height: 1;
     }
 
     .info {

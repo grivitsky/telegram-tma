@@ -68,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const { data: spendings, error: sErr } = await supabase
             .from('spendings')
-            .select('*')
+            .select('*, categories(id, name, emoji, color)')
             .eq('user_id', dbUser.id)
             .gte('date_of_log', ymd(start))
             .lt('date_of_log', ymd(next))
