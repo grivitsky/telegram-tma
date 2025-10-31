@@ -27,9 +27,12 @@
                 <div id="total">Loading...</div>
             </div>
             <div id="transactions"></div>
-            
-            <!-- Edit Transaction View -->
-            <div id="edit-transaction-view" class="edit-transaction-view" style="display: none;">
+        </div>
+        
+        <!-- Edit Transaction Popup -->
+        <div id="edit-transaction-overlay" class="edit-transaction-overlay" style="display: none;">
+            <div id="edit-transaction-popup" class="edit-transaction-popup">
+                <button id="close-edit-button" class="close-edit-button">×</button>
                 <div id="edit-container">
                     <input type="number" id="edit-amount" class="edit-input amount-input" placeholder="Amount" step="0.01" />
                     <input type="text" id="edit-name" class="edit-input name-input" placeholder="Transaction name" />
@@ -324,21 +327,20 @@
 
         // Edit Transaction functionality
         let currentEditingSpending = null;
-        const editView = document.getElementById('edit-transaction-view');
-        const transactionsList = document.getElementById('transactions');
+        const editOverlay = document.getElementById('edit-transaction-overlay');
         const editAmountInput = document.getElementById('edit-amount');
         const editNameInput = document.getElementById('edit-name');
         const saveButton = document.getElementById('save-button');
         const deleteButton = document.getElementById('delete-button');
+        const closeEditButton = document.getElementById('close-edit-button');
 
         function openEditView(spending) {
             currentEditingSpending = spending;
             editAmountInput.value = spending.amount;
             editNameInput.value = spending.name;
             
-            // Hide transactions list and show edit view
-            transactionsList.style.display = 'none';
-            editView.style.display = 'block';
+            // Show popup overlay
+            editOverlay.style.display = 'flex';
             
             // Haptic feedback
             if (tgWebApp && tgWebApp.HapticFeedback) {
@@ -354,8 +356,21 @@
 
         function closeEditView() {
             currentEditingSpending = null;
-            transactionsList.style.display = 'block';
-            editView.style.display = 'none';
+            editOverlay.style.display = 'none';
+        }
+
+        // Close popup when clicking X button
+        if (closeEditButton) {
+            closeEditButton.addEventListener('click', closeEditView);
+        }
+
+        // Close popup when clicking on overlay background
+        if (editOverlay) {
+            editOverlay.addEventListener('click', (e) => {
+                if (e.target === editOverlay) {
+                    closeEditView();
+                }
+            });
         }
 
         async function saveTransaction() {
@@ -723,8 +738,8 @@
     #header {
         margin-bottom: 32px;
         text-align: center;
-        padding-top: 10vh;
-        padding-bottom: 10vh;
+        padding-top: 8vh;
+        padding-bottom: 8vh;
     }
 
     #header-top {
@@ -737,7 +752,7 @@
 
     #net-total-label {
         font-size: 16px;
-        font-weight: 400;
+        font-weight: 500;
         color: #000000;
     }
 
@@ -807,7 +822,7 @@
 
     #total .currency-label {
         color: #999999;
-        font-weight: 400;
+        font-weight: 500;
         font-size: 32px;
     }
 
@@ -1036,22 +1051,67 @@
         color: #000000;
     }
 
-    /* Edit Transaction View Styles */
-    .edit-transaction-view {
-        padding: 20px;
-        min-height: 60vh;
+    /* Edit Transaction Popup Styles */
+    .edit-transaction-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
         display: flex;
         align-items: center;
         justify-content: center;
+        z-index: 2000;
+        padding: 20px;
+    }
+
+    .edit-transaction-popup {
+        background: #ffffff;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 400px;
+        padding: 24px;
+        position: relative;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .close-edit-button {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        font-size: 28px;
+        color: #999999;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background-color 0.2s, color 0.2s;
+        line-height: 1;
+        padding: 0;
+    }
+
+    .close-edit-button:hover {
+        background-color: #f5f5f5;
+        color: #000000;
+    }
+
+    .close-edit-button:active {
+        background-color: #e8e8e8;
     }
 
     #edit-container {
         width: 100%;
-        max-width: 400px;
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 24px;
+        padding-top: 8px;
     }
 
     .edit-input {
@@ -1064,6 +1124,7 @@
         color: #000000;
         text-align: center;
         font-family: system-ui, -apple-system, sans-serif;
+        box-sizing: border-box;
     }
 
     .edit-input:focus {
