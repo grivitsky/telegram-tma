@@ -77,6 +77,12 @@
     const totalEl = document.getElementById('total');
     const listEl  = document.getElementById('transactions');
 
+    // Store loadData function globally so it can be called when switching tabs
+    let spendingsLoadData = null;
+
+    // Store functions for tab-specific actions
+    let categorizeLoadFunctions = null;
+
     // Tab switching functionality
     function initTabs() {
         const tabItems = document.querySelectorAll('.tab-item');
@@ -95,6 +101,15 @@
                 const activeContent = document.querySelector(`.tab-content[data-tab="${tabIndex}"]`);
                 if (activeContent) {
                     activeContent.classList.add('active');
+                }
+
+                // Tab-specific data loading
+                if (tabIndex === '0' && spendingsLoadData) {
+                    // Reload Spendings data when switching to Spendings tab
+                    spendingsLoadData();
+                } else if (tabIndex === '1' && categorizeLoadFunctions) {
+                    // Load categorize data when switching to Categorize tab
+                    categorizeLoadFunctions();
                 }
             });
         });
@@ -255,6 +270,9 @@
         }
 
         loadData();
+        
+        // Store loadData function so it can be called when switching back to Spendings tab
+        spendingsLoadData = loadData;
 
         // Categorize functionality
         let uncategorizedSpendings = [];
@@ -385,20 +403,16 @@
             }
         }
 
-        // Load categorize data when tab is switched to categorize
-        const categorizeTab = document.querySelector('.tab-item[data-tab="1"]');
-        if (categorizeTab) {
-            categorizeTab.addEventListener('click', () => {
-                loadUncategorizedSpendings();
-                loadCategories();
-            });
-        }
-
-        // Also load on initial page load if categorize tab is active (unlikely but safe)
-        const categorizeTabContent = document.querySelector('.tab-content[data-tab="1"]');
-        if (categorizeTabContent && categorizeTabContent.classList.contains('active')) {
+        // Store categorize load functions so they can be called when switching tabs
+        categorizeLoadFunctions = () => {
             loadUncategorizedSpendings();
             loadCategories();
+        };
+
+        // Load categorize data on initial page load if categorize tab is active (unlikely but safe)
+        const categorizeTabContent = document.querySelector('.tab-content[data-tab="1"]');
+        if (categorizeTabContent && categorizeTabContent.classList.contains('active')) {
+            categorizeLoadFunctions();
         }
     }
 </script>
