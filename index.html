@@ -27,6 +27,18 @@
                 <div id="total">Loading...</div>
             </div>
             <div id="transactions"></div>
+            
+            <!-- Edit Transaction View -->
+            <div id="edit-transaction-view" class="edit-transaction-view" style="display: none;">
+                <div id="edit-container">
+                    <input type="number" id="edit-amount" class="edit-input amount-input" placeholder="Amount" step="0.01" />
+                    <input type="text" id="edit-name" class="edit-input name-input" placeholder="Transaction name" />
+                    <div id="edit-buttons">
+                        <button id="save-button" class="edit-button save-button">Save</button>
+                        <button id="delete-button" class="edit-button delete-button">Delete</button>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- Tab 2 Content (Categorize) -->
@@ -213,7 +225,7 @@
                 // Format total amount
                 const total = Number(data.total);
                 totalEl.innerHTML = `
-                    <span class="currency-label">-PLN</span>
+                    <span class="currency-label">PLN</span>
                     <span class="amount-value">${formatAmount(total)}</span>
                 `;
 
@@ -260,7 +272,7 @@
                         dateHeader.className = 'date-header';
                         dateHeader.innerHTML = `
                             <span class="date-label">${formatDateHeader(date)}</span>
-                            <span class="daily-subtotal">-${formatAmount(dailyTotal)} PLN</span>
+                            <span class="daily-subtotal">${formatAmount(dailyTotal)} PLN</span>
                         `;
                         dateGroup.appendChild(dateHeader);
                         
@@ -288,8 +300,11 @@
                                     <div class="name">${s.name}</div>
                                     <div class="time">${formatTime(transDate)}</div>
                                 </div>
-                                <div class="amount">-${formatAmount(Number(s.amount))} PLN</div>
+                                <div class="amount">${formatAmount(Number(s.amount))} PLN</div>
                             `;
+                            item.style.cursor = 'pointer';
+                            item.setAttribute('data-spending-id', s.id);
+                            item.addEventListener('click', () => openEditView(s));
                             dateGroup.appendChild(item);
                         }
                         
@@ -306,6 +321,139 @@
         
         // Store loadData function so it can be called when switching back to Spendings tab
         spendingsLoadData = loadData;
+
+        // Edit Transaction functionality
+        let currentEditingSpending = null;
+        const editView = document.getElementById('edit-transaction-view');
+        const transactionsList = document.getElementById('transactions');
+        const editAmountInput = document.getElementById('edit-amount');
+        const editNameInput = document.getElementById('edit-name');
+        const saveButton = document.getElementById('save-button');
+        const deleteButton = document.getElementById('delete-button');
+
+        function openEditView(spending) {
+            currentEditingSpending = spending;
+            editAmountInput.value = spending.amount;
+            editNameInput.value = spending.name;
+            
+            // Hide transactions list and show edit view
+            transactionsList.style.display = 'none';
+            editView.style.display = 'block';
+            
+            // Haptic feedback
+            if (tgWebApp && tgWebApp.HapticFeedback) {
+                try {
+                    tgWebApp.HapticFeedback.impactOccurred('light');
+                } catch (e) {
+                    if (tgWebApp.impactOccurred) {
+                        tgWebApp.impactOccurred('light');
+                    }
+                }
+            }
+        }
+
+        function closeEditView() {
+            currentEditingSpending = null;
+            transactionsList.style.display = 'block';
+            editView.style.display = 'none';
+        }
+
+        async function saveTransaction() {
+            if (!currentEditingSpending) return;
+
+            const newAmount = parseFloat(editAmountInput.value);
+            const newName = editNameInput.value.trim();
+
+            if (isNaN(newAmount) || !newName) {
+                alert('Please fill in both amount and name');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/spendings/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        initData: tg.initData,
+                        spendingId: currentEditingSpending.id,
+                        amount: newAmount,
+                        name: newName
+                    })
+                });
+
+                const data = await res.json();
+                if (!data.ok) {
+                    alert('Failed to update transaction: ' + (data.error || 'Unknown error'));
+                    return;
+                }
+
+                // Haptic feedback
+                if (tgWebApp && tgWebApp.HapticFeedback) {
+                    try {
+                        tgWebApp.HapticFeedback.notificationOccurred('success');
+                    } catch (e) {
+                        if (tgWebApp.notificationOccurred) {
+                            tgWebApp.notificationOccurred('success');
+                        }
+                    }
+                }
+
+                closeEditView();
+                loadData(); // Reload to show updated data
+            } catch (err) {
+                console.error('saveTransaction error', err);
+                alert('Error saving transaction');
+            }
+        }
+
+        async function deleteTransaction() {
+            if (!currentEditingSpending) return;
+
+            if (!confirm('Are you sure you want to delete this transaction?')) {
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/spendings/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        initData: tg.initData,
+                        spendingId: currentEditingSpending.id
+                    })
+                });
+
+                const data = await res.json();
+                if (!data.ok) {
+                    alert('Failed to delete transaction: ' + (data.error || 'Unknown error'));
+                    return;
+                }
+
+                // Haptic feedback
+                if (tgWebApp && tgWebApp.HapticFeedback) {
+                    try {
+                        tgWebApp.HapticFeedback.notificationOccurred('success');
+                    } catch (e) {
+                        if (tgWebApp.notificationOccurred) {
+                            tgWebApp.notificationOccurred('success');
+                        }
+                    }
+                }
+
+                closeEditView();
+                loadData(); // Reload to show updated data
+            } catch (err) {
+                console.error('deleteTransaction error', err);
+                alert('Error deleting transaction');
+            }
+        }
+
+        if (saveButton) {
+            saveButton.addEventListener('click', saveTransaction);
+        }
+        if (deleteButton) {
+            deleteButton.addEventListener('click', deleteTransaction);
+        }
 
         // Period dropdown functionality
         const monthPill = document.getElementById('month-pill');
@@ -465,7 +613,7 @@
                         <div class="name">${spending.name}</div>
                         <div class="time">${formatTime(transDate)}</div>
                     </div>
-                    <div class="amount">-${formatAmount(Number(spending.amount))} PLN</div>
+                    <div class="amount">${formatAmount(Number(spending.amount))} PLN</div>
                 </div>
             `;
 
@@ -886,6 +1034,92 @@
         font-size: 24px;
         font-weight: 600;
         color: #000000;
+    }
+
+    /* Edit Transaction View Styles */
+    .edit-transaction-view {
+        padding: 20px;
+        min-height: 60vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #edit-container {
+        width: 100%;
+        max-width: 400px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .edit-input {
+        width: 100%;
+        padding: 16px;
+        font-size: 18px;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #000000;
+        text-align: center;
+        font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .edit-input:focus {
+        outline: none;
+        border-color: #42A5F5;
+    }
+
+    .amount-input {
+        font-size: 32px;
+        font-weight: 600;
+    }
+
+    .name-input {
+        font-size: 18px;
+    }
+
+    #edit-buttons {
+        width: 100%;
+        display: flex;
+        gap: 12px;
+        margin-top: 8px;
+    }
+
+    .edit-button {
+        flex: 1;
+        padding: 16px;
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: transform 0.1s, opacity 0.1s;
+        font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .edit-button:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+    }
+
+    .save-button {
+        background-color: #42A5F5;
+        color: #ffffff;
+    }
+
+    .save-button:hover {
+        background-color: #2196F3;
+    }
+
+    .delete-button {
+        background-color: #E57373;
+        color: #ffffff;
+    }
+
+    .delete-button:hover {
+        background-color: #EF5350;
     }
 </style>
 </body>
