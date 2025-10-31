@@ -34,9 +34,46 @@ function ymd(d: Date) {
     return d.toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
+function getDateRange(period: string): { start: Date; end: Date } {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    
+    let start: Date;
+    let end: Date = new Date(now);
+    end.setHours(23, 59, 59, 999);
+
+    switch (period) {
+        case 'today':
+            start = new Date(now);
+            break;
+        case 'week':
+            // Start of week (Monday)
+            const day = now.getDay();
+            const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+            start = new Date(now.getFullYear(), now.getMonth(), diff);
+            start.setHours(0, 0, 0, 0);
+            break;
+        case 'month':
+            // Start of month
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+        case 'year':
+            // Start of year
+            start = new Date(now.getFullYear(), 0, 1);
+            break;
+        default:
+            // Default to month
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+
+    return { start, end };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const initData = req.body?.initData;
+        const period = req.body?.period || 'month'; // Default to 'month'
+
         if (!initData) return res.status(400).json({ ok: false, error: 'Missing initData' });
 
         const valid = isValid(initData, process.env.BOT_TOKEN!);
@@ -61,17 +98,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         if (!dbUser) return res.status(404).json({ ok: false, error: 'User not found' });
 
-        // month range: [startOfMonth, startOfNextMonth)
-        const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        // Get date range based on period
+        const { start, end } = getDateRange(period);
 
         const { data: spendings, error: sErr } = await supabase
             .from('spendings')
             .select('*, categories(id, name, emoji, color)')
             .eq('user_id', dbUser.id)
             .gte('date_of_log', ymd(start))
-            .lt('date_of_log', ymd(next))
+            .lte('date_of_log', ymd(end))
             .order('date_of_log', { ascending: false })
             .order('created_at', { ascending: false });
 

@@ -14,7 +14,15 @@
             <div id="header">
                 <div id="header-top">
                     <span id="net-total-label">Net total</span>
-                    <span id="month-pill">this month</span>
+                    <div id="period-dropdown-container">
+                        <span id="month-pill" class="clickable-pill">this month</span>
+                        <div id="period-dropdown" class="period-dropdown" style="display: none;">
+                            <div class="period-option" data-period="today">Today</div>
+                            <div class="period-option" data-period="week">This week</div>
+                            <div class="period-option active" data-period="month">This month</div>
+                            <div class="period-option" data-period="year">This year</div>
+                        </div>
+                    </div>
                 </div>
                 <div id="total">Loading...</div>
             </div>
@@ -79,6 +87,7 @@
 
     // Store loadData function globally so it can be called when switching tabs
     let spendingsLoadData = null;
+    let currentPeriod = 'month'; // Default period
 
     // Store functions for tab-specific actions
     let categorizeLoadFunctions = null;
@@ -182,11 +191,14 @@
                     return;
                 }
 
-                console.log('➡️ Fetching /api/spendings/list');
+                console.log('➡️ Fetching /api/spendings/list with period:', currentPeriod);
                 const res = await fetch('/api/spendings/list', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ initData: tg.initData })
+                    body: JSON.stringify({ 
+                        initData: tg.initData,
+                        period: currentPeriod
+                    })
                 });
 
                 console.log('⬅️ Response status:', res.status);
@@ -226,7 +238,10 @@
                 if (sortedDates.length === 0) {
                     const empty = document.createElement('div');
                     empty.className = 'empty-state';
-                    empty.innerText = 'No transactions yet this month.';
+                    const periodText = currentPeriod === 'today' ? 'today' : 
+                                     currentPeriod === 'week' ? 'this week' :
+                                     currentPeriod === 'month' ? 'this month' : 'this year';
+                    empty.innerText = `No transactions ${periodText}.`;
                     listEl.appendChild(empty);
                 } else {
                     for (const dateKey of sortedDates) {
@@ -291,6 +306,73 @@
         
         // Store loadData function so it can be called when switching back to Spendings tab
         spendingsLoadData = loadData;
+
+        // Period dropdown functionality
+        const monthPill = document.getElementById('month-pill');
+        const periodDropdown = document.getElementById('period-dropdown');
+        const periodOptions = document.querySelectorAll('.period-option');
+
+        function updatePillText(period) {
+            const textMap = {
+                'today': 'today',
+                'week': 'this week',
+                'month': 'this month',
+                'year': 'this year'
+            };
+            monthPill.innerText = textMap[period] || 'this month';
+        }
+
+        function updateActiveOption(period) {
+            periodOptions.forEach(option => {
+                option.classList.remove('active');
+                if (option.getAttribute('data-period') === period) {
+                    option.classList.add('active');
+                }
+            });
+        }
+
+        // Toggle dropdown when pill is clicked
+        if (monthPill && periodDropdown) {
+            monthPill.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isVisible = periodDropdown.style.display !== 'none';
+                periodDropdown.style.display = isVisible ? 'none' : 'block';
+            });
+
+            // Handle period selection
+            periodOptions.forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const selectedPeriod = option.getAttribute('data-period');
+                    currentPeriod = selectedPeriod;
+                    
+                    updatePillText(selectedPeriod);
+                    updateActiveOption(selectedPeriod);
+                    periodDropdown.style.display = 'none';
+                    
+                    // Reload data with new period
+                    loadData();
+                    
+                    // Haptic feedback
+                    if (tgWebApp && tgWebApp.HapticFeedback) {
+                        try {
+                            tgWebApp.HapticFeedback.impactOccurred('light');
+                        } catch (e) {
+                            if (tgWebApp.impactOccurred) {
+                                tgWebApp.impactOccurred('light');
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!monthPill.contains(e.target) && !periodDropdown.contains(e.target)) {
+                    periodDropdown.style.display = 'none';
+                }
+            });
+        }
 
         // Categorize functionality
         let uncategorizedSpendings = [];
@@ -511,7 +593,11 @@
         color: #000000;
     }
 
-    #month-pill {
+    #period-dropdown-container {
+        position: relative;
+    }
+
+    #month-pill.clickable-pill {
         font-size: 14px;
         font-weight: 400;
         color: #000000;
@@ -519,6 +605,49 @@
         border: 1px solid #e0e0e0;
         padding: 4px 10px;
         border-radius: 12px;
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.2s;
+    }
+
+    #month-pill.clickable-pill:active {
+        background-color: #e8e8e8;
+    }
+
+    .period-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        min-width: 140px;
+        z-index: 100;
+        overflow: hidden;
+    }
+
+    .period-option {
+        padding: 12px 16px;
+        font-size: 14px;
+        color: #000000;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        user-select: none;
+    }
+
+    .period-option:hover {
+        background-color: #f5f5f5;
+    }
+
+    .period-option.active {
+        background-color: #e8e8e8;
+        font-weight: 600;
+    }
+
+    .period-option:not(:last-child) {
+        border-bottom: 1px solid #f0f0f0;
     }
 
     #total {
