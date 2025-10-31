@@ -1,68 +1,109 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Telegram Mini App</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body {
-            font-family: sans-serif;
-            color: var(--tg-theme-text-color);
-            background: var(--tg-theme-bg-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        #status {
-            margin-top: 20px;
-            font-size: 18px;
-            text-align: center;
-        }
-    </style>
-</head>
-
 <body>
-<h1>Mini App Auth Test</h1>
-<div id="status">Authorizing...</div>
+<div id="app">
+    <h1 id="month"></h1>
+    <div id="total">Loading...</div>
+    <div id="transactions"></div>
+</div>
 
 <script>
-    async function verifyUser() {
-        const tg = Telegram.WebApp;
-        tg.ready();
+    const tg = Telegram.WebApp;
+    tg.ready();
 
-        const initData = tg.initData;
-        if (!initData) {
-            document.getElementById('status').innerText =
-                'This page must be opened from Telegram Mini App.';
-            return;
-        }
-
+    async function loadData() {
         try {
-            const res = await fetch('/api/auth/verify', {
+            const res = await fetch('/api/spendings/list', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ initData }),
+                body: JSON.stringify({ initData: tg.initData }),
             });
             const data = await res.json();
+            if (!data.ok) throw new Error(data.error);
 
-            if (data.ok && data.user) {
-                document.getElementById('status').innerHTML =
-                    '✅ hello, <b>' + (data.user.first_name || 'friend') + '</b>';
-            } else {
-                document.getElementById('status').innerText =
-                    '❌ Auth failed: ' + (data.error || 'unknown');
+            const now = new Date();
+            document.getElementById('month').innerText = now.toLocaleString('default', { month: 'long' });
+            document.getElementById('total').innerText = `${data.total.toFixed(2)} spent`;
+
+            const container = document.getElementById('transactions');
+            container.innerHTML = '';
+            for (const s of data.spendings) {
+                const item = document.createElement('div');
+                item.className = 'transaction';
+                item.innerHTML = `
+            <div class="icon"></div>
+            <div class="info">
+              <div class="name">${s.name}</div>
+              <div class="date">${new Date(s.created_at).toLocaleDateString()}</div>
+            </div>
+            <div class="amount">${Number(s.amount).toFixed(2)}</div>
+          `;
+                container.appendChild(item);
             }
         } catch (err) {
-            document.getElementById('status').innerText =
-                '⚠️ Network error. Check console.';
             console.error(err);
+            document.getElementById('total').innerText = 'Error loading data';
         }
     }
 
-    verifyUser();
+    loadData();
 </script>
+
+<style>
+    body {
+        font-family: system-ui, sans-serif;
+        background: var(--tg-theme-bg-color);
+        color: var(--tg-theme-text-color);
+        margin: 0;
+        padding: 20px;
+    }
+
+    #month {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    #total {
+        font-size: 36px;
+        font-weight: 700;
+        margin-bottom: 24px;
+    }
+
+    .transaction {
+        display: flex;
+        align-items: center;
+        background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+        padding: 10px 14px;
+        border-radius: 14px;
+        margin-bottom: 10px;
+    }
+
+    .icon {
+        width: 20px;
+        height: 20px;
+        background: purple;
+        border-radius: 5px;
+        margin-right: 12px;
+    }
+
+    .info {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .name {
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .date {
+        font-size: 12px;
+        color: #888;
+    }
+
+    .amount {
+        font-weight: 600;
+        font-size: 16px;
+    }
+</style>
 </body>
-</html>
