@@ -113,7 +113,14 @@
             <div class="currency-page-header">
                 <button class="currency-back-button" id="currency-back-button">
                     <svg class="back-chevron-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15.6895 12.4766C15.6895 12.2324 15.5918 12.0078 15.4062 11.832L7.67188 4.25391C7.49609 4.08789 7.28125 4 7.02734 4C6.5293 4 6.13867 4.38086 6.13867 4.88867C6.13867 5.13281 6.23633 5.35742 6.39258 5.52344L13.502 12.4766L6.39258 19.4297C6.23633 19.5957 6.13867 19.8105 6.13867 20.0645C6.13867 20.5723 6.5293 20.9531 7.02734 20.9531C7.28125 20.9531 7.49609 20.8652 7.67188 20.6895L15.4062 13.1211C15.5918 12.9355 15.6895 12.7207 15.6895 12.4766Z" fill="currentColor"/>
+                        <g clip-path="url(#clip0_15_710)">
+                            <path d="M6.3105 12.4766C6.3105 12.2324 6.4082 12.0078 6.5938 11.832L14.3281 4.25391C14.5039 4.08789 14.7187 4 14.9727 4C15.4707 4 15.8613 4.38086 15.8613 4.88867C15.8613 5.13281 15.7637 5.35742 15.6074 5.52344L8.49805 12.4766L15.6074 19.4297C15.7637 19.5957 15.8613 19.8105 15.8613 20.0645C15.8613 20.5723 15.4707 20.9531 14.9727 20.9531C14.7187 20.9531 14.5039 20.8652 14.3281 20.6895L6.5938 13.1211C6.4082 12.9355 6.3105 12.7207 6.3105 12.4766Z" fill="currentColor"/>
+                        </g>
+                        <defs>
+                            <clipPath id="clip0_15_710">
+                                <rect width="11.6895" height="16.9629" fill="white" transform="matrix(-1 0 0 1 18 4)"/>
+                            </clipPath>
+                        </defs>
                     </svg>
                 </button>
                 <h2 class="currency-page-title">Currencies</h2>
@@ -159,6 +166,9 @@
 
     // Store Telegram WebApp instance for haptic feedback
     let tgWebApp = null;
+
+    // Store current currency code globally
+    let currentCurrencyCode = 'USD'; // Default to USD
 
     // Tab switching functionality
     function initTabs() {
@@ -281,7 +291,7 @@
                 // Format total amount
                 const total = Number(data.total);
                 totalEl.innerHTML = `
-                    <span class="currency-label">PLN</span>
+                    <span class="currency-label">${currentCurrencyCode}</span>
                     <span class="amount-value">${formatAmount(total)}</span>
                 `;
 
@@ -328,7 +338,7 @@
                         dateHeader.className = 'date-header';
                         dateHeader.innerHTML = `
                             <span class="date-label">${formatDateHeader(date)}</span>
-                            <span class="daily-subtotal">${formatAmount(dailyTotal)} PLN</span>
+                            <span class="daily-subtotal">${formatAmount(dailyTotal)} ${currentCurrencyCode}</span>
                         `;
                         dateGroup.appendChild(dateHeader);
                         
@@ -356,7 +366,7 @@
                                     <div class="name">${s.name}</div>
                                     <div class="time">${formatTime(transDate)}</div>
                                 </div>
-                                <div class="amount">${formatAmount(Number(s.amount))} PLN</div>
+                                <div class="amount">${formatAmount(Number(s.amount))} ${currentCurrencyCode}</div>
                             `;
                             item.style.cursor = 'pointer';
                             item.setAttribute('data-spending-id', s.id);
@@ -681,7 +691,7 @@
                         <div class="name">${spending.name}</div>
                         <div class="time">${formatTime(transDate)}</div>
                     </div>
-                    <div class="amount">${formatAmount(Number(spending.amount))} PLN</div>
+                    <div class="amount">${formatAmount(Number(spending.amount))} ${currentCurrencyCode}</div>
                 </div>
             `;
 
@@ -756,10 +766,18 @@
                 }
 
                 currentCurrencyId = data.currentCurrencyId;
-                if (currentCurrencyId && currencyValueSpan) {
+                if (currentCurrencyId) {
                     const currentCurrency = data.currencies?.find(c => c.id === currentCurrencyId);
                     if (currentCurrency) {
-                        currencyValueSpan.textContent = currentCurrency.code;
+                        const previousCurrency = currentCurrencyCode;
+                        currentCurrencyCode = currentCurrency.code;
+                        if (currencyValueSpan) {
+                            currencyValueSpan.textContent = currentCurrency.code;
+                        }
+                        // Reload data if currency changed from default
+                        if (previousCurrency !== currentCurrency.code && spendingsLoadData) {
+                            spendingsLoadData();
+                        }
                     }
                 }
             } catch (err) {
@@ -871,9 +889,19 @@
                 currentCurrencyId = currencyId;
                 const selectedCurrency = currencies.find(c => c.id === currencyId);
                 
-                // Update the currency value in settings
-                if (currencyValueSpan && selectedCurrency) {
-                    currencyValueSpan.textContent = selectedCurrency.code;
+                if (selectedCurrency) {
+                    // Update global currency code
+                    currentCurrencyCode = selectedCurrency.code;
+                    
+                    // Update the currency value in settings
+                    if (currencyValueSpan) {
+                        currencyValueSpan.textContent = selectedCurrency.code;
+                    }
+                    
+                    // Reload spendings data to update currency display
+                    if (spendingsLoadData) {
+                        spendingsLoadData();
+                    }
                 }
 
                 // Update currency list
@@ -906,6 +934,11 @@
 
         if (currencyBackButton) {
             currencyBackButton.addEventListener('click', closeCurrencyPage);
+        }
+
+        // Load currency on initial app load
+        if (loadCurrentCurrency) {
+            loadCurrentCurrency();
         }
     }
 </script>
