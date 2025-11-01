@@ -353,12 +353,95 @@
         return name.substring(0, 12) + '...';
     }
 
+    // Function to create total skeleton HTML
+    function createTotalSkeleton() {
+        return `
+            <div id="total-skeleton" class="skeleton-total">
+                <span class="skeleton-box skeleton-currency"></span>
+                <span class="skeleton-box skeleton-amount"></span>
+            </div>
+        `;
+    }
+
+    // Function to create transactions skeleton HTML
+    function createTransactionsSkeleton() {
+        return `
+            <div id="transactions-skeleton" class="skeleton-transactions">
+                <div class="skeleton-transaction-group">
+                    <div class="skeleton-date-header">
+                        <span class="skeleton-box skeleton-date-label"></span>
+                        <span class="skeleton-box skeleton-date-subtotal"></span>
+                    </div>
+                    <div class="skeleton-date-divider"></div>
+                    <div class="skeleton-transaction">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-info">
+                            <div class="skeleton-box skeleton-name"></div>
+                            <div class="skeleton-box skeleton-time"></div>
+                        </div>
+                        <div class="skeleton-box skeleton-amount-right"></div>
+                    </div>
+                    <div class="skeleton-transaction">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-info">
+                            <div class="skeleton-box skeleton-name"></div>
+                            <div class="skeleton-box skeleton-time"></div>
+                        </div>
+                        <div class="skeleton-box skeleton-amount-right"></div>
+                    </div>
+                    <div class="skeleton-transaction">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-info">
+                            <div class="skeleton-box skeleton-name"></div>
+                            <div class="skeleton-box skeleton-time"></div>
+                        </div>
+                        <div class="skeleton-box skeleton-amount-right"></div>
+                    </div>
+                </div>
+                <div class="skeleton-transaction-group">
+                    <div class="skeleton-date-header">
+                        <span class="skeleton-box skeleton-date-label"></span>
+                        <span class="skeleton-box skeleton-date-subtotal"></span>
+                    </div>
+                    <div class="skeleton-date-divider"></div>
+                    <div class="skeleton-transaction">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-info">
+                            <div class="skeleton-box skeleton-name"></div>
+                            <div class="skeleton-box skeleton-time"></div>
+                        </div>
+                        <div class="skeleton-box skeleton-amount-right"></div>
+                    </div>
+                    <div class="skeleton-transaction">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-info">
+                            <div class="skeleton-box skeleton-name"></div>
+                            <div class="skeleton-box skeleton-time"></div>
+                        </div>
+                        <div class="skeleton-box skeleton-amount-right"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     // Function to show skeleton loaders
     function showSkeletons() {
         const totalSkeleton = document.getElementById('total-skeleton');
         const transactionsSkeleton = document.getElementById('transactions-skeleton');
-        if (totalSkeleton) totalSkeleton.style.display = 'block';
-        if (transactionsSkeleton) transactionsSkeleton.style.display = 'block';
+        
+        // Recreate skeletons if they don't exist (e.g., after tab switch)
+        if (!totalSkeleton && totalEl) {
+            totalEl.innerHTML = createTotalSkeleton();
+        } else if (totalSkeleton) {
+            totalSkeleton.style.display = 'block';
+        }
+        
+        if (!transactionsSkeleton && listEl) {
+            listEl.innerHTML = createTransactionsSkeleton();
+        } else if (transactionsSkeleton) {
+            transactionsSkeleton.style.display = 'block';
+        }
     }
 
     // Function to hide skeleton loaders
