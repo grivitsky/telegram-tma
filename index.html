@@ -527,9 +527,6 @@
                     return;
                 }
 
-                // Hide skeletons before showing real content
-                hideSkeletons();
-
                 // Format total amount
                 const total = Number(data.total);
                 totalEl.innerHTML = `
@@ -555,6 +552,9 @@
 
                 listEl.innerHTML = '';
                 
+                // Collect all transaction elements for stagger animation
+                const allTransactionElements = [];
+                
                 if (sortedDates.length === 0) {
                     const empty = document.createElement('div');
                     empty.className = 'empty-state';
@@ -563,6 +563,8 @@
                                      currentPeriod === 'month' ? 'this month' : 'this year';
                     empty.innerText = `No transactions ${periodText}.`;
                     listEl.appendChild(empty);
+                    // Hide skeleton immediately for empty state
+                    hideSkeletons();
                 } else {
                     for (const dateKey of sortedDates) {
                         const date = new Date(dateKey);
@@ -592,7 +594,7 @@
                         // Transactions for this date
                         for (const s of transactions) {
                             const item = document.createElement('div');
-                            item.className = 'transaction';
+                            item.className = 'transaction transaction-hidden';
                             const transDate = new Date(s.created_at || s.date_of_log);
                             
                             // Get category info (handle both direct category object and nested categories object)
@@ -614,10 +616,22 @@
                             item.setAttribute('data-spending-id', s.id);
                             item.addEventListener('click', () => openEditView(s));
                             dateGroup.appendChild(item);
+                            allTransactionElements.push(item);
                         }
                         
                         listEl.appendChild(dateGroup);
                     }
+                    
+                    // Hide skeleton and animate transactions in with stagger
+                    hideSkeletons();
+                    
+                    // Animate transactions one by one with stagger effect
+                    allTransactionElements.forEach((transaction, index) => {
+                        setTimeout(() => {
+                            transaction.classList.remove('transaction-hidden');
+                            transaction.classList.add('transaction-reveal');
+                        }, index * 50); // 50ms delay between each transaction
+                    });
                 }
             } catch (err) {
                 console.error('loadData error', err);
@@ -1387,6 +1401,26 @@
         display: flex;
         align-items: center;
         margin-bottom: 12px;
+    }
+
+    .transaction-hidden {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    .transaction-reveal {
+        animation: transactionReveal 0.4s ease-out forwards;
+    }
+
+    @keyframes transactionReveal {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .icon {
