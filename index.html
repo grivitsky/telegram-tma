@@ -644,21 +644,25 @@
                         setTimeout(() => {
                             transaction.classList.remove('transaction-hidden');
                             transaction.classList.add('transaction-reveal');
-                            
-                            // Haptic feedback for first 3 transactions with decreasing intensity
-                            if (index < 3 && tgWebApp && tgWebApp.HapticFeedback) {
-                                const hapticTypes = ['heavy', 'medium', 'light'];
+                        }, index * 50); // 50ms delay between each transaction animation
+                    });
+                    
+                    // Haptic feedback for first 3 transactions with more spacing (150ms between each)
+                    if (tgWebApp && tgWebApp.HapticFeedback) {
+                        const hapticTypes = ['heavy', 'medium', 'light'];
+                        for (let i = 0; i < 3 && i < allTransactionElements.length; i++) {
+                            setTimeout(() => {
                                 try {
-                                    tgWebApp.HapticFeedback.impactOccurred(hapticTypes[index]);
+                                    tgWebApp.HapticFeedback.impactOccurred(hapticTypes[i]);
                                 } catch (e) {
                                     // Fallback if HapticFeedback not available
                                     if (tgWebApp.impactOccurred) {
-                                        tgWebApp.impactOccurred(hapticTypes[index]);
+                                        tgWebApp.impactOccurred(hapticTypes[i]);
                                     }
                                 }
-                            }
-                        }, index * 50); // 50ms delay between each transaction
-                    });
+                            }, i * 150); // 150ms delay between each haptic (more spaced out)
+                        }
+                    }
                 }
             } catch (err) {
                 console.error('loadData error', err);
