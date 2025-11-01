@@ -12,7 +12,7 @@
 <body>
 <!-- Loading Overlay -->
 <div id="loading-overlay" class="loading-overlay">
-    <img src="/assets/web-logo.webp" alt="Logo" class="loading-logo" />
+    <img src="/assets/logo.svg" alt="Logo" class="loading-logo" />
 </div>
 
 <div id="app">
@@ -302,8 +302,13 @@
         console.error('Telegram WebApp SDK is not available');
         // Hide loading overlay if SDK is not available
         const loadingOverlay = document.getElementById('loading-overlay');
+        const app = document.getElementById('app');
         if (loadingOverlay) {
             loadingOverlay.style.opacity = '0';
+            if (app) {
+                app.style.opacity = '1';
+                app.style.transition = 'opacity 0.3s ease-out';
+            }
             setTimeout(() => {
                 loadingOverlay.style.display = 'none';
             }, 300);
@@ -445,8 +450,14 @@
 
         function hideLoadingOverlay() {
             const loadingOverlay = document.getElementById('loading-overlay');
+            const app = document.getElementById('app');
             if (loadingOverlay) {
                 loadingOverlay.style.opacity = '0';
+                // Show app content as we fade out the overlay
+                if (app) {
+                    app.style.opacity = '1';
+                    app.style.transition = 'opacity 0.3s ease-out';
+                }
                 setTimeout(() => {
                     loadingOverlay.style.display = 'none';
                 }, 300); // Wait for fade animation to complete
@@ -1035,6 +1046,7 @@
         max-width: 600px;
         margin: 0 auto;
         position: relative;
+        opacity: 0;
     }
 
     #content {
