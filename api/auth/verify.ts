@@ -77,13 +77,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let dbUser = existing;
         if (!dbUser) {
             console.log('🆕 Creating new user in Supabase...');
+            
+            // Get USD currency ID for default currency
+            const { data: usdCurrency, error: currencyError } = await supabase
+                .from('currencies')
+                .select('id')
+                .eq('code', 'USD')
+                .maybeSingle();
+
+            if (currencyError) {
+                console.error('❌ Currency lookup error:', currencyError);
+                return res.status(500).json({ ok: false, error: 'Currency lookup error' });
+            }
+
             const { data: newUser, error: insertError } = await supabase
                 .from('users')
                 .insert([
                     {
                         telegram_id: user.id,
                         username: user.username,
-                        first_name: user.first_name
+                        first_name: user.first_name,
+                        default_currency_id: usdCurrency?.id || null
                     }
                 ])
                 .select()

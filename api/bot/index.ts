@@ -20,11 +20,19 @@ bot.start(async (ctx) => {
             .maybeSingle();
 
         if (!existing) {
+            // Get USD currency ID for default currency
+            const { data: usdCurrency } = await supabase
+                .from('currencies')
+                .select('id')
+                .eq('code', 'USD')
+                .maybeSingle();
+
             await supabase.from('users').insert([
                 {
                     telegram_id: user.id,
                     username: user.username,
-                    first_name: user.first_name
+                    first_name: user.first_name,
+                    default_currency_id: usdCurrency?.id || null
                 }
             ]);
         }
