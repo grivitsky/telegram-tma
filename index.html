@@ -639,23 +639,23 @@
                         totalEl.classList.add('total-reveal');
                     }, 50);
                     
-                    // Animate transactions one by one with stagger effect (20% faster: 40ms)
+                    // Animate transactions one by one with stagger effect (40% faster total: 32ms)
                     allTransactionElements.forEach((transaction, index) => {
                         setTimeout(() => {
                             transaction.classList.remove('transaction-hidden');
                             transaction.classList.add('transaction-reveal');
-                        }, index * 40); // 40ms delay between each transaction animation (20% faster)
+                        }, index * 32); // 32ms delay between each transaction animation (20% faster again)
                     });
                     
-                    // Haptic feedback: "Reveal Settle Sequence" - 5 impulses with decreasing intensity (30% gentler)
+                    // Haptic feedback: "Reveal Settle Sequence" - 5 impulses with decreasing intensity (50% gentler total)
                     // Pattern aligned to card animation frames (approx. 100–120ms apart)
                     if (tgWebApp && tgWebApp.HapticFeedback) {
                         const hapticPattern = [
-                            { timing: 0, type: 'rigid' },      // 1️⃣ Strong impact (intensity ~0.75, 30% gentler) - t = 0ms
-                            { timing: 120, type: 'medium' },   // 2️⃣ Medium-strong (intensity ~0.55, 30% gentler) - t = +120ms
-                            { timing: 240, type: 'soft' },      // 3️⃣ Medium (intensity ~0.35, 30% gentler) - t = +240ms
-                            { timing: 360, type: 'light' },    // 4️⃣ Soft (intensity ~0.2, 30% gentler) - t = +360ms
-                            { timing: 480, type: 'light' }     // 5️⃣ Gentle tick (intensity ~0.2, already gentlest) - t = +480ms
+                            { timing: 0, type: 'medium' },      // 1️⃣ Medium impact (intensity ~0.55, 20% gentler) - t = 0ms
+                            { timing: 120, type: 'soft' },       // 2️⃣ Soft-medium (intensity ~0.35, 20% gentler) - t = +120ms
+                            { timing: 240, type: 'light' },     // 3️⃣ Light (intensity ~0.2, 20% gentler) - t = +240ms
+                            { timing: 360, type: 'light' },     // 4️⃣ Gentle (intensity ~0.2, already gentlest) - t = +360ms
+                            { timing: 480, type: 'light' }      // 5️⃣ Gentle tick (intensity ~0.2, already gentlest) - t = +480ms
                         ];
                         
                         hapticPattern.forEach(({ timing, type }) => {
