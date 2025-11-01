@@ -18,12 +18,32 @@
                 <div id="header-top">
                     <span id="net-total-label">Net total</span>
                     <div id="period-dropdown-container">
-                        <span id="month-pill" class="clickable-pill">this month</span>
+                        <span id="month-pill" class="clickable-pill"><span class="pill-text">this month</span><svg class="pill-checkmark" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/></svg></span>
                         <div id="period-dropdown" class="period-dropdown" style="display: none;">
-                            <div class="period-option" data-period="today">Today</div>
-                            <div class="period-option" data-period="week">This week</div>
-                            <div class="period-option active" data-period="month">This month</div>
-                            <div class="period-option" data-period="year">This year</div>
+                            <div class="period-option" data-period="today">
+                                <span class="period-option-text">Today</span>
+                                <svg class="period-checkmark" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                                    <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="period-option" data-period="week">
+                                <span class="period-option-text">This week</span>
+                                <svg class="period-checkmark" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                                    <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="period-option active" data-period="month">
+                                <span class="period-option-text">This month</span>
+                                <svg class="period-checkmark" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="period-option" data-period="year">
+                                <span class="period-option-text">This year</span>
+                                <svg class="period-checkmark" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+                                    <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/>
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -267,14 +287,38 @@
     // Store current currency code globally
     let currentCurrencyCode = 'USD'; // Default to USD
 
+    // Function to create ripple effect
+    function createRipple(event, element) {
+        const ripple = document.createElement('span');
+        const rect = element.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = event.clientX - rect.left - size / 2;
+        const y = event.clientY - rect.top - size / 2;
+        
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        ripple.classList.add('ripple');
+        
+        element.appendChild(ripple);
+        
+        // Remove ripple after animation
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    }
+
     // Tab switching functionality
     function initTabs() {
         const tabItems = document.querySelectorAll('.tab-item');
         const tabContents = document.querySelectorAll('.tab-content');
 
         tabItems.forEach(item => {
-            item.addEventListener('click', () => {
+            item.addEventListener('click', (e) => {
                 const tabIndex = item.getAttribute('data-tab');
+                
+                // Create ripple effect
+                createRipple(e, item);
                 
                 // Haptic feedback when clicking tab
                 if (tgWebApp && tgWebApp.HapticFeedback) {
@@ -410,7 +454,6 @@
                         <span class="skeleton-box skeleton-date-label"></span>
                         <span class="skeleton-box skeleton-date-subtotal"></span>
                     </div>
-                    <div class="skeleton-date-divider"></div>
                     <div class="skeleton-transaction">
                         <div class="skeleton-icon"></div>
                         <div class="skeleton-info">
@@ -842,14 +885,21 @@
                 'month': 'this month',
                 'year': 'this year'
             };
-            monthPill.innerText = textMap[period] || 'this month';
+            monthPill.innerHTML = `<span class="pill-text">${textMap[period] || 'this month'}</span><svg class="pill-checkmark" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/></svg>`;
         }
 
         function updateActiveOption(period) {
             periodOptions.forEach(option => {
                 option.classList.remove('active');
+                const checkmark = option.querySelector('.period-checkmark');
+                if (checkmark) {
+                    checkmark.style.display = 'none';
+                }
                 if (option.getAttribute('data-period') === period) {
                     option.classList.add('active');
+                    if (checkmark) {
+                        checkmark.style.display = 'block';
+                    }
                 }
             });
         }
@@ -859,7 +909,19 @@
             monthPill.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const isVisible = periodDropdown.style.display !== 'none';
-                periodDropdown.style.display = isVisible ? 'none' : 'block';
+                if (isVisible) {
+                    periodDropdown.classList.remove('dropdown-open');
+                    periodDropdown.classList.add('dropdown-close');
+                    setTimeout(() => {
+                        periodDropdown.style.display = 'none';
+                        periodDropdown.classList.remove('dropdown-close');
+                    }, 200);
+                } else {
+                    periodDropdown.style.display = 'block';
+                    // Trigger reflow to ensure animation works
+                    periodDropdown.offsetHeight;
+                    periodDropdown.classList.add('dropdown-open');
+                }
             });
 
             // Handle period selection
@@ -871,7 +933,12 @@
                     
                     updatePillText(selectedPeriod);
                     updateActiveOption(selectedPeriod);
-                    periodDropdown.style.display = 'none';
+                    periodDropdown.classList.remove('dropdown-open');
+                    periodDropdown.classList.add('dropdown-close');
+                    setTimeout(() => {
+                        periodDropdown.style.display = 'none';
+                        periodDropdown.classList.remove('dropdown-close');
+                    }, 200);
                     
                     // Reload data with new period
                     loadData();
@@ -892,7 +959,14 @@
             // Close dropdown when clicking outside
             document.addEventListener('click', (e) => {
                 if (!monthPill.contains(e.target) && !periodDropdown.contains(e.target)) {
-                    periodDropdown.style.display = 'none';
+                    if (periodDropdown.style.display !== 'none') {
+                        periodDropdown.classList.remove('dropdown-open');
+                        periodDropdown.classList.add('dropdown-close');
+                        setTimeout(() => {
+                            periodDropdown.style.display = 'none';
+                            periodDropdown.classList.remove('dropdown-close');
+                        }, 200);
+                    }
                 }
             });
         }
@@ -1348,10 +1422,24 @@
         cursor: pointer;
         user-select: none;
         transition: background-color 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
 
     #month-pill.clickable-pill:active {
         background-color: #e8e8e8;
+    }
+
+    .pill-text {
+        font-weight: 600;
+    }
+
+    .pill-checkmark {
+        width: 16px;
+        height: 16px;
+        color: #000000;
+        flex-shrink: 0;
     }
 
     .period-dropdown {
@@ -1362,9 +1450,42 @@
         background: #ffffff;
         border: 1px solid #e0e0e0;
         border-radius: 12px;
-        min-width: 140px;
+        min-width: 160px;
         z-index: 100;
         overflow: hidden;
+        transform-origin: top center;
+        opacity: 0;
+        transform: translateX(-50%) scaleY(0);
+    }
+
+    .period-dropdown.dropdown-open {
+        animation: dropdownGrowDown 0.2s ease-out forwards;
+    }
+
+    .period-dropdown.dropdown-close {
+        animation: dropdownGrowUp 0.2s ease-in forwards;
+    }
+
+    @keyframes dropdownGrowDown {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) scaleY(0);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(-50%) scaleY(1);
+        }
+    }
+
+    @keyframes dropdownGrowUp {
+        from {
+            opacity: 1;
+            transform: translateX(-50%) scaleY(1);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(-50%) scaleY(0);
+        }
     }
 
     .period-option {
@@ -1374,6 +1495,24 @@
         cursor: pointer;
         transition: background-color 0.2s;
         user-select: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
+    }
+
+    .period-option-text {
+        flex: 1;
+        font-weight: 600;
+        text-align: left;
+    }
+
+    .period-checkmark {
+        width: 24px;
+        height: 24px;
+        color: #000000;
+        flex-shrink: 0;
+        margin-left: 12px;
     }
 
     .period-option:hover {
@@ -1381,7 +1520,10 @@
     }
 
     .period-option.active {
-        background-color: #e8e8e8;
+        background-color: transparent;
+    }
+
+    .period-option.active .period-option-text {
         font-weight: 600;
     }
 
@@ -1566,10 +1708,32 @@
         cursor: pointer;
         transition: color 0.2s;
         color: #DADADA;
+        position: relative;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        margin: 0 auto;
+        overflow: hidden;
     }
 
     .tab-item.active {
         color: #1F1F1F;
+    }
+
+    .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.1);
+        transform: scale(0);
+        animation: ripple-animation 0.6s ease-out;
+        pointer-events: none;
+    }
+
+    @keyframes ripple-animation {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
     }
 
     .tab-icon {
@@ -2026,16 +2190,19 @@
         align-items: baseline;
         justify-content: center;
         gap: 8px;
+        min-height: 60px;
     }
 
     .skeleton-currency {
         width: 60px;
-        height: 32px;
+        height: 28px;
+        border-radius: 8px;
     }
 
     .skeleton-amount {
-        width: 180px;
-        height: 42px;
+        width: 200px;
+        height: 50px;
+        border-radius: 12px;
     }
 
     .skeleton-transactions {
