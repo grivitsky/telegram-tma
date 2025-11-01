@@ -282,6 +282,12 @@
         return `${parts[1] ? integerPart + ',' + parts[1] : integerPart}`;
     }
 
+    function truncateName(name) {
+        if (!name) return '';
+        if (name.length <= 12) return name;
+        return name.substring(0, 12) + '...';
+    }
+
     // Check if Telegram WebApp SDK is available
     if (typeof Telegram === 'undefined' || !Telegram.WebApp) {
         setError('Telegram Web App SDK not loaded');
@@ -395,7 +401,7 @@
                                     <span class="icon-emoji">${emoji}</span>
                                 </div>
                                 <div class="info">
-                                    <div class="name">${s.name}</div>
+                                    <div class="name">${truncateName(s.name)}</div>
                                     <div class="time">${formatTime(transDate)}</div>
                                 </div>
                                 <div class="amount">${formatAmount(Number(s.amount))} ${currentCurrencyCode}</div>
@@ -720,7 +726,7 @@
                         <span class="icon-emoji">❓</span>
                     </div>
                     <div class="info">
-                        <div class="name">${spending.name}</div>
+                        <div class="name">${truncateName(spending.name)}</div>
                         <div class="time">${formatTime(transDate)}</div>
                     </div>
                     <div class="amount">${formatAmount(Number(spending.amount))} ${currentCurrencyCode}</div>

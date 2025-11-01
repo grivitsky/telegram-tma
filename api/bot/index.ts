@@ -60,7 +60,9 @@ bot.on('text', async (ctx) => {
 
     // parse "amount name"
     const [amountStr, ...nameParts] = msg.split(' ');
-    const amount = parseFloat(amountStr);
+    // Replace comma with dot for decimal separator (e.g., "23,24" -> "23.24")
+    const normalizedAmountStr = amountStr.replace(',', '.');
+    const amount = parseFloat(normalizedAmountStr);
     const name = nameParts.join(' ').trim();
 
     if (isNaN(amount) || !name) {
