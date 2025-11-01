@@ -67,7 +67,16 @@ function getRandomMotivationalMessage(name: string): string {
 
 function parseTransactionMessage(message: string): { amount: number | null; name: string | null } {
     // Handle URL-encoded newlines (%0A or \n)
-    const decodedMessage = decodeURIComponent(message.replace(/%0A/g, '\n'));
+    // Try to decode, but catch errors if already decoded
+    let decodedMessage: string;
+    try {
+        // First replace %0A with newlines, then decode the rest
+        decodedMessage = decodeURIComponent(message.replace(/%0A/g, '\n'));
+    } catch (e) {
+        // If decodeURIComponent fails, message might already be decoded
+        // Just handle %0A replacements
+        decodedMessage = message.replace(/%0A/g, '\n');
+    }
     const lines = decodedMessage.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     
     let amount: number | null = null;
@@ -99,16 +108,47 @@ function parseTransactionMessage(message: string): { amount: number | null; name
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
+        // Debug: Log the full request query object to see what Vercel receives
+        console.log('🔍 /api/transaction/[telegram_id]/log - Request received');
+        console.log('Method:', req.method);
+        console.log('Query object:', JSON.stringify(req.query, null, 2));
+        console.log('Query keys:', Object.keys(req.query));
+        
         // Get telegram_id from URL path
-        const telegramId = req.query.telegram_id as string;
-        const message = req.query.message as string;
+        // Handle both string and array (Vercel can parse query params as arrays)
+        const telegramIdRaw = req.query.telegram_id;
+        const telegramId = Array.isArray(telegramIdRaw) ? telegramIdRaw[0] : (telegramIdRaw as string);
+        
+        // Get message from query params, handling arrays
+        const messageRaw = req.query.message;
+        const message = Array.isArray(messageRaw) ? messageRaw[0] : (messageRaw as string);
+
+        // Debug: Log what we extracted
+        console.log('Extracted telegram_id:', telegramId);
+        console.log('Extracted message type:', typeof message);
+        console.log('Extracted message (first 50 chars):', message ? `${message.substring(0, 50)}...` : 'undefined/null');
 
         if (!telegramId) {
-            return res.status(400).json({ ok: false, error: 'Missing telegram_id in URL' });
+            return res.status(400).json({ 
+                ok: false, 
+                error: 'Missing telegram_id in URL',
+                received: { 
+                    queryKeys: Object.keys(req.query),
+                    query: req.query 
+                }
+            });
         }
 
         if (!message) {
-            return res.status(400).json({ ok: false, error: 'Missing message query parameter' });
+            return res.status(400).json({ 
+                ok: false, 
+                error: 'Missing message query parameter',
+                received: { 
+                    queryKeys: Object.keys(req.query),
+                    query: req.query,
+                    telegram_id: telegramId
+                }
+            });
         }
 
         // Parse the message
