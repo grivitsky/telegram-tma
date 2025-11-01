@@ -126,6 +126,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Debug: Log what we extracted
         console.log('Extracted telegram_id:', telegramId);
         console.log('Extracted message type:', typeof message);
+        console.log('Extracted message value:', message);
+        console.log('Extracted message length:', message?.length || 0);
+        console.log('Message is empty string?', message === '');
+        console.log('Message trimmed length:', message?.trim().length || 0);
         console.log('Extracted message (first 50 chars):', message ? `${message.substring(0, 50)}...` : 'undefined/null');
 
         if (!telegramId) {
@@ -139,15 +143,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
         }
 
-        if (!message) {
+        // Check for missing or empty message
+        if (!message || message.trim() === '') {
+            const isEmpty = message === '';
             return res.status(400).json({ 
                 ok: false, 
-                error: 'Missing message query parameter',
+                error: isEmpty ? 'Message query parameter is empty. Make sure to URL-encode the message content.' : 'Missing message query parameter',
                 received: { 
                     queryKeys: Object.keys(req.query),
                     query: req.query,
-                    telegram_id: telegramId
-                }
+                    telegram_id: telegramId,
+                    messageValue: message,
+                    messageLength: message?.length || 0,
+                    messageType: typeof message
+                },
+                help: 'The message parameter must be URL-encoded. Use encodeURIComponent() or URL encoding when constructing the URL.'
             });
         }
 
