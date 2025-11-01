@@ -10,11 +10,6 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-<!-- Loading Overlay -->
-<div id="loading-overlay" class="loading-overlay">
-    <img src="/assets/web-logo.webp" alt="Logo" class="loading-logo" />
-</div>
-
 <div id="app">
     <div id="content">
         <!-- Tab 1 Content (Spendings) -->
@@ -32,9 +27,71 @@
                         </div>
                     </div>
                 </div>
-                <div id="total"></div>
+                <div id="total">
+                    <div id="total-skeleton" class="skeleton-total">
+                        <span class="skeleton-box skeleton-currency"></span>
+                        <span class="skeleton-box skeleton-amount"></span>
+                    </div>
+                </div>
             </div>
-            <div id="transactions"></div>
+            <div id="transactions">
+                <div id="transactions-skeleton" class="skeleton-transactions">
+                    <div class="skeleton-transaction-group">
+                        <div class="skeleton-date-header">
+                            <span class="skeleton-box skeleton-date-label"></span>
+                            <span class="skeleton-box skeleton-date-subtotal"></span>
+                        </div>
+                        <div class="skeleton-date-divider"></div>
+                        <div class="skeleton-transaction">
+                            <div class="skeleton-icon"></div>
+                            <div class="skeleton-info">
+                                <div class="skeleton-box skeleton-name"></div>
+                                <div class="skeleton-box skeleton-time"></div>
+                            </div>
+                            <div class="skeleton-box skeleton-amount-right"></div>
+                        </div>
+                        <div class="skeleton-transaction">
+                            <div class="skeleton-icon"></div>
+                            <div class="skeleton-info">
+                                <div class="skeleton-box skeleton-name"></div>
+                                <div class="skeleton-box skeleton-time"></div>
+                            </div>
+                            <div class="skeleton-box skeleton-amount-right"></div>
+                        </div>
+                        <div class="skeleton-transaction">
+                            <div class="skeleton-icon"></div>
+                            <div class="skeleton-info">
+                                <div class="skeleton-box skeleton-name"></div>
+                                <div class="skeleton-box skeleton-time"></div>
+                            </div>
+                            <div class="skeleton-box skeleton-amount-right"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-transaction-group">
+                        <div class="skeleton-date-header">
+                            <span class="skeleton-box skeleton-date-label"></span>
+                            <span class="skeleton-box skeleton-date-subtotal"></span>
+                        </div>
+                        <div class="skeleton-date-divider"></div>
+                        <div class="skeleton-transaction">
+                            <div class="skeleton-icon"></div>
+                            <div class="skeleton-info">
+                                <div class="skeleton-box skeleton-name"></div>
+                                <div class="skeleton-box skeleton-time"></div>
+                            </div>
+                            <div class="skeleton-box skeleton-amount-right"></div>
+                        </div>
+                        <div class="skeleton-transaction">
+                            <div class="skeleton-icon"></div>
+                            <div class="skeleton-info">
+                                <div class="skeleton-box skeleton-name"></div>
+                                <div class="skeleton-box skeleton-time"></div>
+                            </div>
+                            <div class="skeleton-box skeleton-amount-right"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- Edit Transaction Popup -->
@@ -296,23 +353,28 @@
         return name.substring(0, 12) + '...';
     }
 
+    // Function to show skeleton loaders
+    function showSkeletons() {
+        document.getElementById('total-skeleton').style.display = 'block';
+        document.getElementById('transactions-skeleton').style.display = 'block';
+    }
+
+    // Function to hide skeleton loaders
+    function hideSkeletons() {
+        const totalSkeleton = document.getElementById('total-skeleton');
+        const transactionsSkeleton = document.getElementById('transactions-skeleton');
+        if (totalSkeleton) totalSkeleton.style.display = 'none';
+        if (transactionsSkeleton) transactionsSkeleton.style.display = 'none';
+    }
+
+    // Show skeletons initially
+    showSkeletons();
+    
     // Check if Telegram WebApp SDK is available
     if (typeof Telegram === 'undefined' || !Telegram.WebApp) {
         setError('Telegram Web App SDK not loaded');
         console.error('Telegram WebApp SDK is not available');
-        // Hide loading overlay if SDK is not available
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const app = document.getElementById('app');
-        if (loadingOverlay) {
-            loadingOverlay.style.opacity = '0';
-            if (app) {
-                app.style.opacity = '1';
-                app.style.transition = 'opacity 0.3s ease-out';
-            }
-            setTimeout(() => {
-                loadingOverlay.style.display = 'none';
-            }, 300);
-        }
+        hideSkeletons();
     } else {
         const tg = Telegram.WebApp;
         tg.ready();
@@ -325,9 +387,12 @@
                 if (!tg || !tg.initData) {
                     setError('Open inside Telegram');
                     console.warn('No initData — likely opened outside Telegram WebApp.');
-                    hideLoadingOverlay();
+                    hideSkeletons();
                     return;
                 }
+
+                // Show skeletons when loading
+                showSkeletons();
 
                 console.log('➡️ Fetching /api/spendings/list with period:', currentPeriod);
                 const res = await fetch('/api/spendings/list', {
@@ -345,9 +410,12 @@
 
                 if (!data.ok) {
                     setError(data.error || 'Unknown API error');
-                    hideLoadingOverlay();
+                    hideSkeletons();
                     return;
                 }
+
+                // Hide skeletons before showing real content
+                hideSkeletons();
 
                 // Format total amount
                 const total = Number(data.total);
@@ -438,29 +506,10 @@
                         listEl.appendChild(dateGroup);
                     }
                 }
-                
-                // Hide loading overlay after data is loaded
-                hideLoadingOverlay();
             } catch (err) {
                 console.error('loadData error', err);
                 setError('Network or script error (see console)');
-                hideLoadingOverlay();
-            }
-        }
-
-        function hideLoadingOverlay() {
-            const loadingOverlay = document.getElementById('loading-overlay');
-            const app = document.getElementById('app');
-            if (loadingOverlay) {
-                loadingOverlay.style.opacity = '0';
-                // Show app content as we fade out the overlay
-                if (app) {
-                    app.style.opacity = '1';
-                    app.style.transition = 'opacity 0.3s ease-out';
-                }
-                setTimeout(() => {
-                    loadingOverlay.style.display = 'none';
-                }, 300); // Wait for fade animation to complete
+                hideSkeletons();
             }
         }
 
@@ -1046,7 +1095,6 @@
         max-width: 600px;
         margin: 0 auto;
         position: relative;
-        opacity: 0;
     }
 
     #content {
@@ -1722,37 +1770,112 @@
         flex-shrink: 0;
     }
 
-    /* Loading Overlay Styles */
-    .loading-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #ffffff;
+    /* Skeleton Loader Styles */
+    .skeleton-box {
+        display: inline-block;
+        background: linear-gradient(90deg, #E0E0E0 25%, #F5F5F5 50%, #E0E0E0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s ease-in-out infinite;
+        border-radius: 4px;
+    }
+
+    @keyframes skeleton-loading {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
+    .skeleton-total {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .skeleton-currency {
+        width: 60px;
+        height: 32px;
+    }
+
+    .skeleton-amount {
+        width: 180px;
+        height: 42px;
+    }
+
+    .skeleton-transactions {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .skeleton-transaction-group {
+        margin-bottom: 32px;
+    }
+
+    .skeleton-date-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .skeleton-date-label {
+        width: 120px;
+        height: 16px;
+    }
+
+    .skeleton-date-subtotal {
+        width: 100px;
+        height: 16px;
+    }
+
+    .skeleton-date-divider {
+        height: 1px;
+        background: #e0e0e0;
+        margin-bottom: 12px;
+    }
+
+    .skeleton-transaction {
         display: flex;
         align-items: center;
-        justify-content: center;
-        z-index: 10000;
-        opacity: 1;
-        transition: opacity 0.3s ease-out;
+        margin-bottom: 12px;
     }
 
-    .loading-logo {
-        width: 120px;
-        height: 120px;
-        animation: pulse 2s ease-in-out infinite;
+    .skeleton-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        margin-right: 14px;
+        flex-shrink: 0;
+        background: linear-gradient(90deg, #E0E0E0 25%, #F5F5F5 50%, #E0E0E0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s ease-in-out infinite;
     }
 
-    @keyframes pulse {
-        0%, 100% {
-            transform: scale(1);
-            opacity: 1;
-        }
-        50% {
-            transform: scale(1.05);
-            opacity: 0.9;
-        }
+    .skeleton-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+    }
+
+    .skeleton-name {
+        width: 60%;
+        height: 18px;
+    }
+
+    .skeleton-time {
+        width: 40%;
+        height: 16px;
+    }
+
+    .skeleton-amount-right {
+        width: 100px;
+        height: 20px;
+        margin-left: 24px;
     }
 </style>
 </body>
