@@ -384,8 +384,9 @@
                     loadCurrentCurrency().then(() => {
                         // Reload spendings data with updated currency if we're on spendings tab
                         // (in case user switches back to spendings tab after settings)
+                        // Disable haptics for background reload
                         if (spendingsLoadData) {
-                            spendingsLoadData();
+                            spendingsLoadData(false, false);
                         }
                     });
                 }
@@ -549,7 +550,7 @@
         // Store Telegram WebApp instance for haptic feedback in tabs
         tgWebApp = tg;
 
-        async function loadData(showLoadingState = true) {
+        async function loadData(showLoadingState = true, enableHaptics = true) {
             try {
                 if (!tg || !tg.initData) {
                     setError('Open inside Telegram');
@@ -720,27 +721,31 @@
                     
                     // Haptic feedback: "Reveal Settle Sequence" - 5 impulses with decreasing intensity (50% gentler total)
                     // Pattern aligned to card animation frames (approx. 100–120ms apart)
-                    if (tgWebApp && tgWebApp.HapticFeedback) {
-                        const hapticPattern = [
-                            { timing: 0, type: 'medium' },      // 1️⃣ Medium impact (intensity ~0.55, 20% gentler) - t = 0ms
-                            { timing: 120, type: 'soft' },       // 2️⃣ Soft-medium (intensity ~0.35, 20% gentler) - t = +120ms
-                            { timing: 240, type: 'light' },     // 3️⃣ Light (intensity ~0.2, 20% gentler) - t = +240ms
-                            { timing: 360, type: 'light' },     // 4️⃣ Gentle (intensity ~0.2, already gentlest) - t = +360ms
-                            { timing: 480, type: 'light' }      // 5️⃣ Gentle tick (intensity ~0.2, already gentlest) - t = +480ms
-                        ];
-                        
-                        hapticPattern.forEach(({ timing, type }) => {
-                            setTimeout(() => {
-                                try {
-                                    tgWebApp.HapticFeedback.impactOccurred(type);
-                                } catch (e) {
-                                    // Fallback if HapticFeedback not available
-                                    if (tgWebApp.impactOccurred) {
-                                        tgWebApp.impactOccurred(type);
+                    // Only play haptics if enabled and we're on the Spendings tab
+                    if (enableHaptics && tgWebApp && tgWebApp.HapticFeedback) {
+                        const activeTab = document.querySelector('.tab-content.active');
+                        if (activeTab && activeTab.getAttribute('data-tab') === '0') {
+                            const hapticPattern = [
+                                { timing: 0, type: 'medium' },      // 1️⃣ Medium impact (intensity ~0.55, 20% gentler) - t = 0ms
+                                { timing: 120, type: 'soft' },       // 2️⃣ Soft-medium (intensity ~0.35, 20% gentler) - t = +120ms
+                                { timing: 240, type: 'light' },     // 3️⃣ Light (intensity ~0.2, 20% gentler) - t = +240ms
+                                { timing: 360, type: 'light' },     // 4️⃣ Gentle (intensity ~0.2, already gentlest) - t = +360ms
+                                { timing: 480, type: 'light' }      // 5️⃣ Gentle tick (intensity ~0.2, already gentlest) - t = +480ms
+                            ];
+                            
+                            hapticPattern.forEach(({ timing, type }) => {
+                                setTimeout(() => {
+                                    try {
+                                        tgWebApp.HapticFeedback.impactOccurred(type);
+                                    } catch (e) {
+                                        // Fallback if HapticFeedback not available
+                                        if (tgWebApp.impactOccurred) {
+                                            tgWebApp.impactOccurred(type);
+                                        }
                                     }
-                                }
-                            }, timing);
-                        });
+                                }, timing);
+                            });
+                        }
                     }
                 }
             } catch (err) {
@@ -1174,9 +1179,10 @@
                             currencyValueSpan.textContent = currentCurrency.code;
                         }
                         // Reload spendings data if currency changed and we're on spendings tab
+                        // Disable haptics for background currency update
                         const activeTab = document.querySelector('.tab-content.active');
                         if (previousCurrency !== currentCurrency.code && spendingsLoadData && activeTab && activeTab.getAttribute('data-tab') === '0') {
-                            spendingsLoadData();
+                            spendingsLoadData(false, false);
                         }
                         return true;
                     }
@@ -1325,8 +1331,9 @@
                     }
                     
                     // Reload spendings data to update currency display
+                    // Disable haptics for background currency update
                     if (spendingsLoadData) {
-                        spendingsLoadData();
+                        spendingsLoadData(false, false);
                     }
                 }
 
