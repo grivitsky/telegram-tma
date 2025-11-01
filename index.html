@@ -10,6 +10,11 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+    <img src="/assets/web-logo.webp" alt="Logo" class="loading-logo" />
+</div>
+
 <div id="app">
     <div id="content">
         <!-- Tab 1 Content (Spendings) -->
@@ -27,7 +32,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="total">Loading...</div>
+                <div id="total"></div>
             </div>
             <div id="transactions"></div>
         </div>
@@ -295,6 +300,14 @@
     if (typeof Telegram === 'undefined' || !Telegram.WebApp) {
         setError('Telegram Web App SDK not loaded');
         console.error('Telegram WebApp SDK is not available');
+        // Hide loading overlay if SDK is not available
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.opacity = '0';
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+            }, 300);
+        }
     } else {
         const tg = Telegram.WebApp;
         tg.ready();
@@ -307,6 +320,7 @@
                 if (!tg || !tg.initData) {
                     setError('Open inside Telegram');
                     console.warn('No initData — likely opened outside Telegram WebApp.');
+                    hideLoadingOverlay();
                     return;
                 }
 
@@ -326,6 +340,7 @@
 
                 if (!data.ok) {
                     setError(data.error || 'Unknown API error');
+                    hideLoadingOverlay();
                     return;
                 }
 
@@ -418,9 +433,23 @@
                         listEl.appendChild(dateGroup);
                     }
                 }
+                
+                // Hide loading overlay after data is loaded
+                hideLoadingOverlay();
             } catch (err) {
                 console.error('loadData error', err);
                 setError('Network or script error (see console)');
+                hideLoadingOverlay();
+            }
+        }
+
+        function hideLoadingOverlay() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                }, 300); // Wait for fade animation to complete
             }
         }
 
@@ -1679,6 +1708,39 @@
         height: 24px;
         color: #000000;
         flex-shrink: 0;
+    }
+
+    /* Loading Overlay Styles */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        opacity: 1;
+        transition: opacity 0.3s ease-out;
+    }
+
+    .loading-logo {
+        width: 120px;
+        height: 120px;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.05);
+            opacity: 0.9;
+        }
     }
 </style>
 </body>

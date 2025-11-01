@@ -1,0 +1,20 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#81D4FA;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#42A5F5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1565C0;stop-opacity:1" />
+    </linearGradient>
+    <filter id="circleShadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#1565C0" flood-opacity="0.3"/>
+    </filter>
+    <filter id="textShadow">
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#000000" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+  <!-- Circle with gradient and 3D effect -->
+  <circle cx="60" cy="60" r="56" fill="url(#blueGradient)" filter="url(#circleShadow)"/>
+  <!-- Dollar sign with subtle emboss effect -->
+  <text x="60" y="82" font-family="Arial, sans-serif" font-size="70" font-weight="bold" fill="white" text-anchor="middle" filter="url(#textShadow)">$</text>
+</svg>
+
