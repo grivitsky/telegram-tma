@@ -533,6 +533,9 @@
                     <span class="currency-label">${currentCurrencyCode}</span>
                     <span class="amount-value">${formatAmount(total)}</span>
                 `;
+                // Clear any existing animation classes and add hidden class initially, then animate
+                totalEl.classList.remove('total-reveal');
+                totalEl.classList.add('total-hidden');
 
                 // Group spendings by date
                 const groupedByDate = {};
@@ -565,6 +568,11 @@
                     listEl.appendChild(empty);
                     // Hide skeleton immediately for empty state
                     hideSkeletons();
+                    // Animate total reveal for empty state
+                    setTimeout(() => {
+                        totalEl.classList.remove('total-hidden');
+                        totalEl.classList.add('total-reveal');
+                    }, 50);
                 } else {
                     for (const dateKey of sortedDates) {
                         const date = new Date(dateKey);
@@ -622,8 +630,14 @@
                         listEl.appendChild(dateGroup);
                     }
                     
-                    // Hide skeleton and animate transactions in with stagger
+                    // Hide skeleton and animate total first
                     hideSkeletons();
+                    
+                    // Animate total reveal (without haptic)
+                    setTimeout(() => {
+                        totalEl.classList.remove('total-hidden');
+                        totalEl.classList.add('total-reveal');
+                    }, 50);
                     
                     // Animate transactions one by one with stagger effect
                     allTransactionElements.forEach((transaction, index) => {
@@ -631,14 +645,15 @@
                             transaction.classList.remove('transaction-hidden');
                             transaction.classList.add('transaction-reveal');
                             
-                            // Gentle haptic feedback for first 5 transactions
-                            if (index < 5 && tgWebApp && tgWebApp.HapticFeedback) {
+                            // Haptic feedback for first 3 transactions with decreasing intensity
+                            if (index < 3 && tgWebApp && tgWebApp.HapticFeedback) {
+                                const hapticTypes = ['heavy', 'medium', 'light'];
                                 try {
-                                    tgWebApp.HapticFeedback.impactOccurred('light');
+                                    tgWebApp.HapticFeedback.impactOccurred(hapticTypes[index]);
                                 } catch (e) {
                                     // Fallback if HapticFeedback not available
                                     if (tgWebApp.impactOccurred) {
-                                        tgWebApp.impactOccurred('light');
+                                        tgWebApp.impactOccurred(hapticTypes[index]);
                                     }
                                 }
                             }
@@ -1378,6 +1393,26 @@
     #total .amount-value {
         color: #000000;
         font-weight: 700;
+    }
+
+    .total-hidden {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    .total-reveal {
+        animation: totalReveal 0.4s ease-out forwards;
+    }
+
+    @keyframes totalReveal {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .date-group {
