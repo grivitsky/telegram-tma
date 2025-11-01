@@ -647,21 +647,29 @@
                         }, index * 50); // 50ms delay between each transaction animation
                     });
                     
-                    // Haptic feedback for first 3 transactions with more spacing (150ms between each)
+                    // Haptic feedback: "Reveal Settle Sequence" - 5 impulses with decreasing intensity
+                    // Pattern aligned to card animation frames (approx. 100–120ms apart)
                     if (tgWebApp && tgWebApp.HapticFeedback) {
-                        const hapticTypes = ['heavy', 'medium', 'light'];
-                        for (let i = 0; i < 3 && i < allTransactionElements.length; i++) {
+                        const hapticPattern = [
+                            { timing: 0, type: 'heavy' },      // 1️⃣ Strong impact (intensity 1.0) - t = 0ms
+                            { timing: 120, type: 'rigid' },    // 2️⃣ Medium-strong (intensity 0.75) - t = +120ms
+                            { timing: 240, type: 'medium' },   // 3️⃣ Medium (intensity 0.55) - t = +240ms
+                            { timing: 360, type: 'soft' },     // 4️⃣ Soft (intensity 0.35) - t = +360ms
+                            { timing: 480, type: 'light' }      // 5️⃣ Gentle tick (intensity 0.2) - t = +480ms
+                        ];
+                        
+                        hapticPattern.forEach(({ timing, type }) => {
                             setTimeout(() => {
                                 try {
-                                    tgWebApp.HapticFeedback.impactOccurred(hapticTypes[i]);
+                                    tgWebApp.HapticFeedback.impactOccurred(type);
                                 } catch (e) {
                                     // Fallback if HapticFeedback not available
                                     if (tgWebApp.impactOccurred) {
-                                        tgWebApp.impactOccurred(hapticTypes[i]);
+                                        tgWebApp.impactOccurred(type);
                                     }
                                 }
-                            }, i * 150); // 150ms delay between each haptic (more spaced out)
-                        }
+                            }, timing);
+                        });
                     }
                 }
             } catch (err) {
@@ -2105,3 +2113,4 @@
 </style>
 </body>
 </html>
+
