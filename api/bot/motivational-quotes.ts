@@ -51,3 +51,8 @@ export const MOTIVATING_MESSAGES = [
   "Keep showing up, {name}. Success is boring—and that's the point."
 ];
 
+export function getRandomMotivationalMessage(name: string): string {
+  const randomIndex = Math.floor(Math.random() * MOTIVATING_MESSAGES.length);
+  return MOTIVATING_MESSAGES[randomIndex].replace(/{name}/g, name);
+}
+

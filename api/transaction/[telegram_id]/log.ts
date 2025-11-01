@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { getRandomMotivationalMessage } from '../../bot/motivational-quotes';
 
 const supabase = createClient(
     process.env.SUPABASE_URL!,
@@ -66,7 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Find user by telegram_id
         const { data: dbUser, error: userError } = await supabase
             .from('users')
-            .select('id')
+            .select('id, first_name')
             .eq('telegram_id', parseInt(telegramId))
             .maybeSingle();
 
@@ -104,6 +105,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (insertError) {
             console.error('Insert error:', insertError);
             return res.status(500).json({ ok: false, error: 'DB error (insert)' });
+        }
+
+        // Send motivational message via Telegram Bot API
+        try {
+            const userName = dbUser.first_name || 'there';
+            const motivationalMessage = getRandomMotivationalMessage(userName);
+            
+            await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: parseInt(telegramId),
+                    text: motivationalMessage
+                })
+            });
+        } catch (telegramError) {
+            // Log error but don't fail the request - transaction was already saved
+            console.error('Failed to send Telegram message:', telegramError);
         }
 
         return res.status(200).json({ 
