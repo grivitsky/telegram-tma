@@ -630,9 +630,7 @@
         // Store loadData function so it can be called when switching back to Spendings tab
         spendingsLoadData = loadData;
         
-        // Load data on initial app load
-        showSkeletons();
-        loadData(false);
+        // Don't load data here - wait for currency to be defined, then initialize
 
         // Edit Transaction functionality
         let currentEditingSpending = null;
@@ -1034,6 +1032,29 @@
                 return false;
             }
         };
+
+        // Initialize app: load currency first, then data
+        async function initializeApp() {
+            showSkeletons();
+            
+            // Load currency first
+            try {
+                const currencyLoaded = await loadCurrentCurrency();
+                if (currencyLoaded) {
+                    console.log('Currency loaded:', currentCurrencyCode);
+                } else {
+                    console.warn('Currency loading returned false, using default USD');
+                }
+            } catch (err) {
+                console.error('Failed to load currency on init:', err);
+                // Continue with USD default
+            }
+            
+            // Then load data with correct currency
+            loadData(false);
+        }
+        
+        initializeApp();
 
         async function loadCurrencies() {
             try {
