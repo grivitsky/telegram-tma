@@ -630,6 +630,18 @@
                         setTimeout(() => {
                             transaction.classList.remove('transaction-hidden');
                             transaction.classList.add('transaction-reveal');
+                            
+                            // Gentle haptic feedback for first 5 transactions
+                            if (index < 5 && tgWebApp && tgWebApp.HapticFeedback) {
+                                try {
+                                    tgWebApp.HapticFeedback.impactOccurred('light');
+                                } catch (e) {
+                                    // Fallback if HapticFeedback not available
+                                    if (tgWebApp.impactOccurred) {
+                                        tgWebApp.impactOccurred('light');
+                                    }
+                                }
+                            }
                         }, index * 50); // 50ms delay between each transaction
                     });
                 }
