@@ -355,8 +355,10 @@
 
     // Function to show skeleton loaders
     function showSkeletons() {
-        document.getElementById('total-skeleton').style.display = 'block';
-        document.getElementById('transactions-skeleton').style.display = 'block';
+        const totalSkeleton = document.getElementById('total-skeleton');
+        const transactionsSkeleton = document.getElementById('transactions-skeleton');
+        if (totalSkeleton) totalSkeleton.style.display = 'block';
+        if (transactionsSkeleton) transactionsSkeleton.style.display = 'block';
     }
 
     // Function to hide skeleton loaders
@@ -367,8 +369,12 @@
         if (transactionsSkeleton) transactionsSkeleton.style.display = 'none';
     }
 
-    // Show skeletons initially
-    showSkeletons();
+    // Show skeletons initially - wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showSkeletons);
+    } else {
+        showSkeletons();
+    }
     
     // Check if Telegram WebApp SDK is available
     if (typeof Telegram === 'undefined' || !Telegram.WebApp) {
