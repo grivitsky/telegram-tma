@@ -405,6 +405,21 @@
                 });
 
                 console.log('⬅️ Response status:', res.status);
+                
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    let errorMsg = 'Network error';
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMsg = errorData.error || errorMsg;
+                    } catch (e) {
+                        errorMsg = `HTTP ${res.status}: ${errorText || 'Unknown error'}`;
+                    }
+                    setError(errorMsg);
+                    hideSkeletons();
+                    return;
+                }
+
                 const data = await res.json();
                 console.log('⬅️ Response body:', data);
 
@@ -508,7 +523,8 @@
                 }
             } catch (err) {
                 console.error('loadData error', err);
-                setError('Network or script error (see console)');
+                const errorMessage = err instanceof Error ? err.message : 'Network or script error';
+                setError(errorMessage);
                 hideSkeletons();
             }
         }
