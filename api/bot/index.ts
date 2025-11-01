@@ -1,13 +1,18 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { Telegraf, Markup } from 'telegraf';
 import { createClient } from '@supabase/supabase-js';
-import { getRandomMotivationalMessage } from './motivational-quotes';
+import { MOTIVATING_MESSAGES } from './motivational-quotes';
 
 const bot = new Telegraf(process.env.BOT_TOKEN!);
 const supabase = createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_KEY!
 );
+
+function getRandomMotivationalMessage(name: string): string {
+  const randomIndex = Math.floor(Math.random() * MOTIVATING_MESSAGES.length);
+  return MOTIVATING_MESSAGES[randomIndex].replace(/{name}/g, name);
+}
 
 // --- commands ---
 bot.start(async (ctx) => {
