@@ -302,13 +302,20 @@
                 // Tab-specific data loading
                 if (tabIndex === '0' && spendingsLoadData) {
                     // Reload Spendings data when switching to Spendings tab
+                    // This ensures currency is up-to-date if it was changed in settings
                     spendingsLoadData();
                 } else if (tabIndex === '1' && categorizeLoadFunctions) {
                     // Load categorize data when switching to Categorize tab
                     categorizeLoadFunctions();
                 } else if (tabIndex === '3' && loadCurrentCurrency) {
                     // Load current currency when switching to Settings tab
-                    loadCurrentCurrency();
+                    loadCurrentCurrency().then(() => {
+                        // Reload spendings data with updated currency if we're on spendings tab
+                        // (in case user switches back to spendings tab after settings)
+                        if (spendingsLoadData) {
+                            spendingsLoadData();
+                        }
+                    });
                 }
             });
         });
@@ -623,21 +630,9 @@
         // Store loadData function so it can be called when switching back to Spendings tab
         spendingsLoadData = loadData;
         
-        // Load currency first, then load data to ensure correct currency is displayed
-        async function initializeApp() {
-            // Show skeletons while loading
-            showSkeletons();
-            
-            // Load currency first
-            if (loadCurrentCurrency) {
-                await loadCurrentCurrency();
-            }
-            
-            // Then load data with correct currency (skeletons already shown)
-            loadData(false);
-        }
-        
-        initializeApp();
+        // Load data on initial app load
+        showSkeletons();
+        loadData(false);
 
         // Edit Transaction functionality
         let currentEditingSpending = null;
@@ -1025,8 +1020,9 @@
                         if (currencyValueSpan) {
                             currencyValueSpan.textContent = currentCurrency.code;
                         }
-                        // Reload data if currency changed from default
-                        if (previousCurrency !== currentCurrency.code && spendingsLoadData) {
+                        // Reload spendings data if currency changed and we're on spendings tab
+                        const activeTab = document.querySelector('.tab-content.active');
+                        if (previousCurrency !== currentCurrency.code && spendingsLoadData && activeTab && activeTab.getAttribute('data-tab') === '0') {
                             spendingsLoadData();
                         }
                         return true;
