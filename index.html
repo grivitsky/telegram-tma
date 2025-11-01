@@ -471,7 +471,7 @@
         // Store Telegram WebApp instance for haptic feedback in tabs
         tgWebApp = tg;
 
-        async function loadData() {
+        async function loadData(showLoadingState = true) {
             try {
                 if (!tg || !tg.initData) {
                     setError('Open inside Telegram');
@@ -480,8 +480,10 @@
                     return;
                 }
 
-                // Show skeletons when loading
-                showSkeletons();
+                // Show skeletons when loading (unless already showing)
+                if (showLoadingState) {
+                    showSkeletons();
+                }
 
                 console.log('➡️ Fetching /api/spendings/list with period:', currentPeriod);
                 const res = await fetch('/api/spendings/list', {
@@ -618,10 +620,24 @@
             }
         }
 
-        loadData();
-        
         // Store loadData function so it can be called when switching back to Spendings tab
         spendingsLoadData = loadData;
+        
+        // Load currency first, then load data to ensure correct currency is displayed
+        async function initializeApp() {
+            // Show skeletons while loading
+            showSkeletons();
+            
+            // Load currency first
+            if (loadCurrentCurrency) {
+                await loadCurrentCurrency();
+            }
+            
+            // Then load data with correct currency (skeletons already shown)
+            loadData(false);
+        }
+        
+        initializeApp();
 
         // Edit Transaction functionality
         let currentEditingSpending = null;
@@ -997,7 +1013,7 @@
                 const data = await res.json();
                 if (!data.ok) {
                     console.error('Failed to load current currency:', data.error);
-                    return;
+                    return false;
                 }
 
                 currentCurrencyId = data.currentCurrencyId;
@@ -1013,10 +1029,13 @@
                         if (previousCurrency !== currentCurrency.code && spendingsLoadData) {
                             spendingsLoadData();
                         }
+                        return true;
                     }
                 }
+                return false;
             } catch (err) {
                 console.error('loadCurrentCurrency error', err);
+                return false;
             }
         };
 
@@ -1171,10 +1190,7 @@
             currencyBackButton.addEventListener('click', closeCurrencyPage);
         }
 
-        // Load currency on initial app load
-        if (loadCurrentCurrency) {
-            loadCurrentCurrency();
-        }
+        // Currency is already loaded in initializeApp() above
     }
 </script>
 
