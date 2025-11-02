@@ -161,8 +161,10 @@
                     <!-- Amount Display -->
                     <div class="edit-amount-section">
                         <div class="edit-amount-wrapper">
-                            <span class="edit-currency-label" id="edit-currency-label">PLN</span>
-                            <span class="edit-amount-display" id="edit-amount-display">0,00</span>
+                            <div class="edit-amount-content">
+                                <span class="edit-currency-label" id="edit-currency-label">PLN</span>
+                                <span class="edit-amount-display" id="edit-amount-display">0,00</span>
+                            </div>
                             <button id="backspace-button" class="edit-backspace-button">
                                 <img src="/assets/backspace.svg" alt="Backspace" class="edit-backspace-icon" />
                             </button>
@@ -1042,8 +1044,16 @@
             // Prevent background scrolling
             document.body.classList.add('no-scroll');
             
-            // Show popup overlay
+            // Show popup overlay and trigger animation
             editOverlay.style.display = 'flex';
+            editOverlay.classList.remove('closing');
+            
+            // Trigger animation after a small delay to ensure display is rendered
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    editOverlay.classList.add('opening');
+                });
+            });
             
             // Haptic feedback
             if (tgWebApp && tgWebApp.HapticFeedback) {
@@ -1058,12 +1068,20 @@
         }
 
         function closeEditView() {
-            currentEditingSpending = null;
-            currentAmountString = '';
-            editOverlay.style.display = 'none';
+            // Trigger closing animation
+            editOverlay.classList.remove('opening');
+            editOverlay.classList.add('closing');
             
-            // Re-enable background scrolling
-            document.body.classList.remove('no-scroll');
+            // Wait for animation to complete before hiding
+            setTimeout(() => {
+                currentEditingSpending = null;
+                currentAmountString = '';
+                editOverlay.style.display = 'none';
+                editOverlay.classList.remove('closing');
+                
+                // Re-enable background scrolling
+                document.body.classList.remove('no-scroll');
+            }, 350); // Match the closing animation duration
         }
 
         // Handle numeric keyboard input
@@ -2290,6 +2308,16 @@
         justify-content: center;
         z-index: 2000;
         overflow-y: auto;
+        opacity: 0;
+        transition: opacity 0.3s ease-out;
+    }
+
+    .edit-transaction-overlay.opening {
+        opacity: 1;
+    }
+
+    .edit-transaction-overlay.closing {
+        opacity: 0;
     }
 
     .edit-transaction-popup {
@@ -2302,6 +2330,17 @@
         position: relative;
         overflow: hidden;
         justify-content: space-between;
+        transform: translateY(100%);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .edit-transaction-overlay.opening .edit-transaction-popup {
+        transform: translateY(0);
+    }
+
+    .edit-transaction-overlay.closing .edit-transaction-popup {
+        transform: translateY(100%);
+        transition: transform 0.35s cubic-bezier(0.6, 0, 0.8, 0.4);
     }
 
     /* Header */
@@ -2385,6 +2424,15 @@
         align-items: baseline;
         gap: 8px;
         position: relative;
+        justify-content: space-between;
+    }
+
+    .edit-amount-content {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        flex: 1;
+        justify-content: center;
     }
 
     .edit-currency-label {
@@ -2416,7 +2464,6 @@
         padding: 0;
         transition: background-color 0.2s, transform 0.1s;
         flex-shrink: 0;
-        margin-left: auto;
     }
 
     .edit-backspace-button:active {
@@ -2470,18 +2517,18 @@
 
     .edit-name-input {
         width: 100%;
-        padding: 16px;
+        padding: 12px 16px;
         font-size: 16px;
-        border: 2px solid #e0e0e0;
+        border: none;
         border-radius: 12px;
-        background: #ffffff;
+        background: #F5F5F5;
         color: #000000;
         font-family: 'Nunito', sans-serif;
     }
 
     .edit-name-input:focus {
         outline: none;
-        border-color: #42A5F5;
+        background: #EBEBEB;
     }
 
     /* Bottom Section: Category + Keyboard */
@@ -2492,7 +2539,7 @@
     /* Category Selection */
     .edit-category-section {
         padding: 0 20px;
-        padding-bottom: 16px;
+        padding-bottom: 8px;
         position: relative;
     }
 
@@ -2570,6 +2617,10 @@
         font-weight: 600;
         flex: 1;
         text-transform: capitalize;
+    }
+
+    .edit-category-dropdown-item .edit-category-dropdown-name {
+        font-weight: 600;
     }
 
     /* Custom Keyboard */
