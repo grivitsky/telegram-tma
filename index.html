@@ -228,11 +228,23 @@
                 <div class="categorize-sticky-section">
                     <div class="categorize-header">
                         <h2 class="categorize-title">Categorize</h2>
-                        <div id="categorize-counter" class="categorize-counter">10 items left</div>
+                        <div id="categorize-counter" class="categorize-counter">
+                            <div id="categorize-counter-skeleton" class="skeleton-box skeleton-counter" style="display: none;"></div>
+                        </div>
                     </div>
                     
                     <div id="categorize-card-wrapper" class="categorize-card-wrapper">
                         <div id="categorize-transaction" class="categorize-transaction"></div>
+                        <div id="categorize-card-skeleton" class="categorize-card-skeleton">
+                            <div class="skeleton-card-top">
+                                <div class="skeleton-card-name"></div>
+                                <div class="skeleton-card-time"></div>
+                            </div>
+                            <div class="skeleton-card-bottom">
+                                <div class="skeleton-card-amount-label"></div>
+                                <div class="skeleton-card-amount"></div>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="categorize-divider"></div>
@@ -1444,6 +1456,9 @@
 
         async function loadUncategorizedSpendings() {
             try {
+                // Show skeleton
+                showCategorizeSkeleton();
+                
                 const res = await fetch('/api/spendings/uncategorized', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1453,14 +1468,19 @@
                 const data = await res.json();
                 if (!data.ok) {
                     console.error('Failed to load uncategorized spendings:', data.error);
+                    hideCategorizeSkeleton();
                     return;
                 }
 
                 uncategorizedSpendings = data.spendings || [];
                 currentSpendingIndex = 0;
+                
+                // Hide skeleton before displaying content
+                hideCategorizeSkeleton();
                 displayNextTransaction();
             } catch (err) {
                 console.error('loadUncategorizedSpendings error', err);
+                hideCategorizeSkeleton();
             }
         }
 
@@ -1530,6 +1550,26 @@
             }
         }
 
+        function showCategorizeSkeleton() {
+            const counterSkeleton = document.getElementById('categorize-counter-skeleton');
+            const cardSkeleton = document.getElementById('categorize-card-skeleton');
+            const categorizeCounter = document.getElementById('categorize-counter');
+            const categorizeTransaction = document.getElementById('categorize-transaction');
+            
+            if (counterSkeleton) counterSkeleton.style.display = 'block';
+            if (cardSkeleton) cardSkeleton.style.display = 'flex';
+            if (categorizeCounter) categorizeCounter.textContent = '';
+            if (categorizeTransaction) categorizeTransaction.style.display = 'none';
+        }
+
+        function hideCategorizeSkeleton() {
+            const counterSkeleton = document.getElementById('categorize-counter-skeleton');
+            const cardSkeleton = document.getElementById('categorize-card-skeleton');
+            
+            if (counterSkeleton) counterSkeleton.style.display = 'none';
+            if (cardSkeleton) cardSkeleton.style.display = 'none';
+        }
+
         function displayNextTransaction() {
             if (currentSpendingIndex >= uncategorizedSpendings.length) {
                 // All transactions categorized
@@ -1561,6 +1601,7 @@
             categorizeCardWrapper.style.display = 'block';
             categorizeCategoriesSection.style.display = 'flex';
             categorizeComplete.style.display = 'none';
+            categorizeTransaction.style.display = 'block';
             updateCounter();
         }
 
@@ -1596,6 +1637,18 @@
                 if (!data.ok) {
                     console.error('Failed to update category:', data.error);
                     return;
+                }
+
+                // Haptic feedback for success
+                if (tgWebApp && tgWebApp.HapticFeedback) {
+                    try {
+                        tgWebApp.HapticFeedback.notificationOccurred('success');
+                    } catch (e) {
+                        // Fallback if HapticFeedback not available
+                        if (tgWebApp.notificationOccurred) {
+                            tgWebApp.notificationOccurred('success');
+                        }
+                    }
                 }
 
                 // Animate card out and move to next transaction
@@ -3306,6 +3359,76 @@
         width: 100px;
         height: 20px;
         margin-left: 24px;
+    }
+
+    /* Categorize Page Skeletons */
+    .skeleton-counter {
+        width: 100px;
+        height: 16px;
+        border-radius: 4px;
+    }
+
+    .categorize-card-skeleton {
+        display: none;
+        flex-direction: column;
+        justify-content: space-between;
+        background: #EEEEF0;
+        padding: 24px;
+        border-radius: 20px;
+        width: 100%;
+        height: 20vh;
+    }
+
+    .skeleton-card-top {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .skeleton-card-name {
+        width: 60%;
+        height: 20px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #E0E0E0 25%, #F5F5F5 50%, #E0E0E0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-card-time {
+        width: 80px;
+        height: 16px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #E0E0E0 25%, #F5F5F5 50%, #E0E0E0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-card-bottom {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-end;
+        width: 100%;
+    }
+
+    .skeleton-card-amount-label {
+        width: 70px;
+        height: 16px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #E0E0E0 25%, #F5F5F5 50%, #E0E0E0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-card-amount {
+        width: 120px;
+        height: 28px;
+        border-radius: 4px;
+        background: linear-gradient(90deg, #E0E0E0 25%, #F5F5F5 50%, #E0E0E0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s ease-in-out infinite;
     }
 </style>
 </body>
