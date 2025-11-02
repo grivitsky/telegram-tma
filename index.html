@@ -253,6 +253,14 @@
                 <div id="categorize-categories" class="categorize-categories-section">
                     <div id="categorize-label" class="categorize-label">Select category</div>
                     <div id="categorize-buttons" class="categorize-buttons"></div>
+                    <div id="categorize-buttons-skeleton" class="categorize-buttons-skeleton">
+                        <div class="skeleton-category-button"></div>
+                        <div class="skeleton-category-button"></div>
+                        <div class="skeleton-category-button"></div>
+                        <div class="skeleton-category-button"></div>
+                        <div class="skeleton-category-button"></div>
+                        <div class="skeleton-category-button"></div>
+                    </div>
                 </div>
                 
                 <div id="categorize-complete" class="categorize-complete" style="display: none;">
@@ -1486,6 +1494,9 @@
 
         async function loadCategories() {
             try {
+                // Show category skeleton
+                showCategoriesSkeleton();
+                
                 const res = await fetch('/api/categories/list', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1495,13 +1506,18 @@
                 const data = await res.json();
                 if (!data.ok) {
                     console.error('Failed to load categories:', data.error);
+                    hideCategoriesSkeleton();
                     return;
                 }
 
                 categories = data.categories || [];
+                
+                // Hide skeleton before rendering
+                hideCategoriesSkeleton();
                 renderCategoryButtons();
             } catch (err) {
                 console.error('loadCategories error', err);
+                hideCategoriesSkeleton();
             }
         }
 
@@ -1537,6 +1553,9 @@
                 button.addEventListener('click', () => assignCategory(category.id));
                 categorizeButtons.appendChild(button);
             });
+            
+            // Ensure buttons container is visible
+            if (categorizeButtons) categorizeButtons.style.display = 'flex';
         }
 
         function updateCounter() {
@@ -1568,6 +1587,22 @@
             
             if (counterSkeleton) counterSkeleton.style.display = 'none';
             if (cardSkeleton) cardSkeleton.style.display = 'none';
+        }
+
+        function showCategoriesSkeleton() {
+            const categoriesSkeleton = document.getElementById('categorize-buttons-skeleton');
+            const categorizeButtons = document.getElementById('categorize-buttons');
+            
+            if (categoriesSkeleton) categoriesSkeleton.style.display = 'flex';
+            if (categorizeButtons) categorizeButtons.style.display = 'none';
+        }
+
+        function hideCategoriesSkeleton() {
+            const categoriesSkeleton = document.getElementById('categorize-buttons-skeleton');
+            const categorizeButtons = document.getElementById('categorize-buttons');
+            
+            if (categoriesSkeleton) categoriesSkeleton.style.display = 'none';
+            if (categorizeButtons) categorizeButtons.style.display = 'flex';
         }
 
         function displayNextTransaction() {
@@ -3426,6 +3461,23 @@
         width: 120px;
         height: 28px;
         border-radius: 4px;
+        background: linear-gradient(90deg, #E0E0E0 25%, #F5F5F5 50%, #E0E0E0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s ease-in-out infinite;
+    }
+
+    /* Category Skeletons */
+    .categorize-buttons-skeleton {
+        display: none;
+        flex-direction: column;
+        gap: 12px;
+        padding-bottom: 100px;
+    }
+
+    .skeleton-category-button {
+        width: 100%;
+        height: 58px;
+        border-radius: 16px;
         background: linear-gradient(90deg, #E0E0E0 25%, #F5F5F5 50%, #E0E0E0 75%);
         background-size: 200% 100%;
         animation: skeleton-loading 1.5s ease-in-out infinite;
