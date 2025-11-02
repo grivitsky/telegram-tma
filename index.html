@@ -176,6 +176,17 @@
                     <input type="text" id="edit-name" class="edit-name-input" placeholder="Transaction name" style="display: none;" />
                 </div>
                 
+                <!-- Category Selection -->
+                <div class="edit-category-section">
+                    <button id="edit-category-button" class="edit-category-button">
+                        <span class="edit-category-emoji" id="edit-category-emoji">❓</span>
+                        <span class="edit-category-name" id="edit-category-name">Uncategorized</span>
+                    </button>
+                    <div id="edit-category-dropdown" class="edit-category-dropdown" style="display: none;">
+                        <!-- Categories will be populated here -->
+                    </div>
+                </div>
+                
                 <!-- Custom Numeric Keyboard -->
                 <div class="edit-keyboard">
                     <div class="keyboard-row">
@@ -811,6 +822,8 @@
         // Edit Transaction functionality
         let currentEditingSpending = null;
         let currentAmountString = ''; // Store amount as string for custom keyboard
+        let currentSelectedCategoryId = null;
+        let editCategories = [];
         
         const editOverlay = document.getElementById('edit-transaction-overlay');
         const editAmountDisplay = document.getElementById('edit-amount-display');
@@ -818,6 +831,10 @@
         const editNameInput = document.getElementById('edit-name');
         const editNameButton = document.getElementById('edit-name-button');
         const editNameDisplay = document.getElementById('edit-name-display');
+        const editCategoryButton = document.getElementById('edit-category-button');
+        const editCategoryEmoji = document.getElementById('edit-category-emoji');
+        const editCategoryName = document.getElementById('edit-category-name');
+        const editCategoryDropdown = document.getElementById('edit-category-dropdown');
         const saveButton = document.getElementById('save-button');
         const deleteButton = document.getElementById('delete-button');
         const closeEditButton = document.getElementById('close-edit-button');
@@ -840,6 +857,147 @@
         function parseAmountFromDisplay(amountStr) {
             return parseFloat(amountStr.replace(',', '.'));
         }
+
+        // Helper function to darken color by percentage
+        function darkenColor(hex, percent) {
+            // Remove # if present
+            hex = hex.replace('#', '');
+            
+            // Convert to RGB
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            
+            // Darken
+            const newR = Math.floor(r * (1 - percent / 100));
+            const newG = Math.floor(g * (1 - percent / 100));
+            const newB = Math.floor(b * (1 - percent / 100));
+            
+            // Convert back to hex
+            return '#' + [newR, newG, newB].map(x => x.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Helper function to convert hex to rgba
+        function hexToRgba(hex, alpha) {
+            hex = hex.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        // Update category display
+        function updateCategoryDisplay(category) {
+            if (category) {
+                editCategoryEmoji.textContent = category.emoji;
+                editCategoryName.textContent = category.name;
+                editCategoryName.style.color = darkenColor(category.color, 20);
+                editCategoryButton.style.backgroundColor = hexToRgba(category.color, 0.24);
+                currentSelectedCategoryId = category.id;
+            } else {
+                editCategoryEmoji.textContent = '❓';
+                editCategoryName.textContent = 'Uncategorized';
+                editCategoryName.style.color = '#757575';
+                editCategoryButton.style.backgroundColor = 'rgba(158, 158, 158, 0.24)';
+                currentSelectedCategoryId = null;
+            }
+        }
+
+        // Load categories for edit popup
+        async function loadEditCategories() {
+            try {
+                const res = await fetch('/api/categories/list', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ initData: tg.initData })
+                });
+
+                const data = await res.json();
+                if (data.ok) {
+                    editCategories = data.categories || [];
+                }
+            } catch (err) {
+                console.error('Failed to load categories for edit:', err);
+            }
+        }
+
+        // Render category dropdown
+        function renderCategoryDropdown() {
+            editCategoryDropdown.innerHTML = '';
+            editCategories.forEach(category => {
+                const item = document.createElement('div');
+                item.className = 'edit-category-dropdown-item';
+                
+                const emoji = document.createElement('span');
+                emoji.className = 'edit-category-dropdown-emoji';
+                emoji.textContent = category.emoji;
+                
+                const name = document.createElement('span');
+                name.className = 'edit-category-dropdown-name';
+                name.textContent = category.name;
+                name.style.color = darkenColor(category.color, 20);
+                
+                item.appendChild(emoji);
+                item.appendChild(name);
+                
+                item.addEventListener('click', () => {
+                    updateCategoryDisplay(category);
+                    editCategoryDropdown.style.display = 'none';
+                    
+                    // Haptic feedback
+                    if (tgWebApp && tgWebApp.HapticFeedback) {
+                        try {
+                            tgWebApp.HapticFeedback.impactOccurred('light');
+                        } catch (e) {
+                            if (tgWebApp.impactOccurred) {
+                                tgWebApp.impactOccurred('light');
+                            }
+                        }
+                    }
+                });
+                
+                editCategoryDropdown.appendChild(item);
+            });
+        }
+
+        // Toggle category dropdown
+        if (editCategoryButton) {
+            editCategoryButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isVisible = editCategoryDropdown.style.display !== 'none';
+                
+                if (isVisible) {
+                    editCategoryDropdown.style.display = 'none';
+                } else {
+                    renderCategoryDropdown();
+                    editCategoryDropdown.style.display = 'block';
+                }
+                
+                // Haptic feedback
+                if (tgWebApp && tgWebApp.HapticFeedback) {
+                    try {
+                        tgWebApp.HapticFeedback.impactOccurred('light');
+                    } catch (e) {
+                        if (tgWebApp.impactOccurred) {
+                            tgWebApp.impactOccurred('light');
+                        }
+                    }
+                }
+            });
+        }
+
+        // Close category dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (editCategoryDropdown && 
+                editCategoryButton && 
+                !editCategoryDropdown.contains(e.target) && 
+                !editCategoryButton.contains(e.target)) {
+                editCategoryDropdown.style.display = 'none';
+            }
+        });
+
+        // Load categories on initialization
+        loadEditCategories();
 
         function openEditView(spending) {
             currentEditingSpending = spending;
@@ -867,6 +1025,13 @@
             // Hide name input initially
             editNameInput.style.display = 'none';
             editNameButton.style.display = 'flex';
+            
+            // Initialize category display
+            const category = spending.categories || spending.category || null;
+            updateCategoryDisplay(category);
+            
+            // Close category dropdown if open
+            editCategoryDropdown.style.display = 'none';
             
             // Prevent background scrolling
             document.body.classList.add('no-scroll');
@@ -1035,7 +1200,8 @@
             }
 
             try {
-                const res = await fetch('/api/spendings/update', {
+                // First update the amount and name
+                const updateRes = await fetch('/api/spendings/update', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1046,10 +1212,30 @@
                     })
                 });
 
-                const data = await res.json();
-                if (!data.ok) {
-                    alert('Failed to update transaction: ' + (data.error || 'Unknown error'));
+                const updateData = await updateRes.json();
+                if (!updateData.ok) {
+                    alert('Failed to update transaction: ' + (updateData.error || 'Unknown error'));
                     return;
+                }
+
+                // Then update category if changed
+                const originalCategoryId = (currentEditingSpending.categories || currentEditingSpending.category)?.id || null;
+                if (currentSelectedCategoryId !== originalCategoryId && currentSelectedCategoryId !== null) {
+                    const categoryRes = await fetch('/api/spendings/update-category', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            initData: tg.initData,
+                            spendingId: currentEditingSpending.id,
+                            categoryId: currentSelectedCategoryId
+                        })
+                    });
+
+                    const categoryData = await categoryRes.json();
+                    if (!categoryData.ok) {
+                        console.error('Failed to update category:', categoryData.error);
+                        // Don't fail the whole save if category update fails
+                    }
                 }
 
                 // Haptic feedback
@@ -2280,6 +2466,87 @@
     .edit-name-input:focus {
         outline: none;
         border-color: #42A5F5;
+    }
+
+    /* Category Selection */
+    .edit-category-section {
+        padding: 0 20px;
+        padding-bottom: 16px;
+        position: relative;
+    }
+
+    .edit-category-button {
+        width: 100%;
+        padding: 12px 16px;
+        background-color: rgba(33, 150, 243, 0.24);
+        border: none;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+        text-align: left;
+    }
+
+    .edit-category-button:active {
+        transform: scale(0.98);
+    }
+
+    .edit-category-emoji {
+        font-size: 24px;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    .edit-category-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1976D2;
+        flex: 1;
+    }
+
+    .edit-category-dropdown {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 20px;
+        right: 20px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 100;
+    }
+
+    .edit-category-dropdown-item {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        border-bottom: 1px solid #F0F0F0;
+    }
+
+    .edit-category-dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .edit-category-dropdown-item:active {
+        background-color: #F5F5F5;
+    }
+
+    .edit-category-dropdown-emoji {
+        font-size: 24px;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    .edit-category-dropdown-name {
+        font-size: 16px;
+        font-weight: 600;
+        flex: 1;
     }
 
     /* Custom Keyboard */
