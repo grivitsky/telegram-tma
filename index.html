@@ -227,7 +227,7 @@
             <div id="categorize-container">
                 <div class="categorize-sticky-section">
                     <div class="categorize-header">
-                        <h2 class="categorize-title">Categorize</h2>
+                        <h2 class="page-title">Categorize</h2>
                         <div id="categorize-counter" class="categorize-counter">
                             <div id="categorize-counter-skeleton" class="skeleton-box skeleton-counter" style="display: none;"></div>
                         </div>
@@ -283,7 +283,7 @@
         <!-- Tab 3 Content (Insights) -->
         <div class="tab-content" data-tab="2">
             <div class="insights-container">
-                <h2 class="settings-header">Insights</h2>
+                <h2 class="page-title">Insights</h2>
                 <div class="tab-placeholder">
                     <p>Content coming soon...</p>
                 </div>
@@ -293,7 +293,7 @@
         <!-- Tab 4 Content (Settings) -->
         <div class="tab-content" data-tab="3">
             <div class="settings-container">
-                <h2 class="settings-header">Settings</h2>
+                <h2 class="page-title">Settings</h2>
                 <div class="settings-section">
                     <div class="settings-subheader">General</div>
                     <div class="settings-divider"></div>
@@ -2434,11 +2434,17 @@
         padding: 0;
     }
 
-    .categorize-title {
+    .page-title {
         font-size: 32px;
         font-weight: 700;
         color: #000000;
         margin: 0;
+        margin-bottom: 32px;
+        text-align: left;
+    }
+
+    .categorize-header .page-title {
+        margin-bottom: 0;
     }
 
     .categorize-counter {
@@ -3170,15 +3176,6 @@
     }
 
     /* Settings Tab Styles */
-
-    .settings-header {
-        font-size: 32px;
-        font-weight: 700;
-        color: #000000;
-        margin: 0;
-        margin-bottom: 32px;
-        text-align: left;
-    }
 
     .settings-section {
         margin-bottom: 32px;
