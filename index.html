@@ -847,20 +847,23 @@
         const keyboardKeys = document.querySelectorAll('.keyboard-key[data-key]');
 
         // Format amount for display (with comma as decimal separator)
-        function formatAmountForDisplay(amount) {
-            if (!amount || amount === '') return '0';
-            // Replace dot with comma for display
-            let formatted = amount.toString().replace('.', ',');
-            // Remove leading zeros except before comma
-            if (formatted !== '0' && formatted !== '0,') {
-                formatted = formatted.replace(/^0+(?=\d)/, '');
-            }
-            return formatted || '0';
+        function formatAmountForDisplay(digitString) {
+            // digitString contains only digits, treat last 2 as cents
+            if (!digitString || digitString === '' || digitString === '0') return '0,00';
+            
+            // Pad with zeros if needed
+            const padded = digitString.padStart(3, '0');
+            const wholePart = padded.slice(0, -2).replace(/^0+/, '') || '0';
+            const centsPart = padded.slice(-2);
+            
+            return `${wholePart},${centsPart}`;
         }
 
-        // Convert display amount (with comma) to number
-        function parseAmountFromDisplay(amountStr) {
-            return parseFloat(amountStr.replace(',', '.'));
+        // Convert digit string to decimal number
+        function parseAmountFromDigitString(digitString) {
+            if (!digitString || digitString === '' || digitString === '0') return 0;
+            const amount = parseInt(digitString, 10) / 100;
+            return amount;
         }
 
         // Helper function to darken color by percentage
@@ -1007,15 +1010,10 @@
         function openEditView(spending) {
             currentEditingSpending = spending;
             
-            // Initialize amount display - remove trailing zeros for editing
+            // Initialize amount display - convert to cents (digits only)
             const amount = Math.abs(Number(spending.amount));
-            let amountStr = amount.toString();
-            // Remove trailing .00 or .0
-            if (amountStr.includes('.')) {
-                amountStr = amountStr.replace(/\.?0+$/, '');
-            }
-            currentAmountString = amountStr.replace('.', ',');
-            if (currentAmountString === '') currentAmountString = '0';
+            const cents = Math.round(amount * 100);
+            currentAmountString = cents.toString();
             editAmountDisplay.textContent = formatAmountForDisplay(currentAmountString);
             
             // Set currency label
@@ -1133,31 +1131,21 @@
                 }
             }
 
+            // Ignore decimal point - we build from right to left
             if (key === '.') {
-                // Add decimal point if not already present
-                if (!currentAmountString.includes(',')) {
-                    // If it's just "0", replace with "0,"
-                    if (currentAmountString === '0') {
-                        currentAmountString = '0,';
-                    } else {
-                        currentAmountString += ',';
-                    }
-                }
+                return;
+            }
+            
+            // Add digit - limit to 10 digits to prevent overflow
+            if (currentAmountString.length >= 10) {
+                return;
+            }
+            
+            // Remove leading zero and append new digit
+            if (currentAmountString === '0') {
+                currentAmountString = key;
             } else {
-                // Add digit
-                if (currentAmountString === '0') {
-                    // Replace initial 0 with the digit
-                    currentAmountString = key;
-                } else {
-                    // Check if we already have 2 decimal places
-                    if (currentAmountString.includes(',')) {
-                        const parts = currentAmountString.split(',');
-                        if (parts[1] && parts[1].length >= 2) {
-                            return; // Don't add more digits after 2 decimal places
-                        }
-                    }
-                    currentAmountString += key;
-                }
+                currentAmountString += key;
             }
             
             editAmountDisplay.textContent = formatAmountForDisplay(currentAmountString);
@@ -1178,11 +1166,10 @@
                 }
             }
 
-            // Can't delete if only "0"
-            if (currentAmountString === '0') return;
-            
-            currentAmountString = currentAmountString.slice(0, -1);
-            if (currentAmountString === '' || currentAmountString === ',') {
+            // Remove last digit
+            if (currentAmountString.length > 1) {
+                currentAmountString = currentAmountString.slice(0, -1);
+            } else {
                 currentAmountString = '0';
             }
             editAmountDisplay.textContent = formatAmountForDisplay(currentAmountString);
@@ -1217,11 +1204,11 @@
         async function saveTransaction() {
             if (!currentEditingSpending) return;
 
-            const newAmount = parseAmountFromDisplay(currentAmountString);
+            const newAmount = parseAmountFromDigitString(currentAmountString);
             const newName = editNameInput.value.trim();
 
-            if (isNaN(newAmount) || newAmount <= 0 || !newName) {
-                alert('Please fill in both amount and name');
+            if (isNaN(newAmount) || newAmount <= 0) {
+                alert('Please enter a valid amount');
                 return;
             }
 
@@ -2486,6 +2473,7 @@
     .edit-name-section {
         padding: 0 20px;
         padding-bottom: 16px;
+        margin-top: 4px;
         display: flex;
         justify-content: center;
     }
