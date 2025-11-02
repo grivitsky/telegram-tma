@@ -826,17 +826,14 @@
 
         // Format amount for display (with comma as decimal separator)
         function formatAmountForDisplay(amount) {
-            if (!amount || amount === '0' || amount === '0,' || amount === '') return '0,00';
+            if (!amount || amount === '') return '0';
             // Replace dot with comma for display
             let formatted = amount.toString().replace('.', ',');
-            // Ensure two decimal places
-            if (formatted.includes(',')) {
-                const parts = formatted.split(',');
-                const integerPart = parts[0] || '0';
-                const decimalPart = parts[1] || '';
-                return integerPart + ',' + decimalPart.padEnd(2, '0').substring(0, 2);
+            // Remove leading zeros except before comma
+            if (formatted !== '0' && formatted !== '0,') {
+                formatted = formatted.replace(/^0+(?=\d)/, '');
             }
-            return formatted + ',00';
+            return formatted || '0';
         }
 
         // Convert display amount (with comma) to number
@@ -847,9 +844,15 @@
         function openEditView(spending) {
             currentEditingSpending = spending;
             
-            // Initialize amount display
+            // Initialize amount display - remove trailing zeros for editing
             const amount = Math.abs(Number(spending.amount));
-            currentAmountString = amount.toFixed(2).replace('.', ',');
+            let amountStr = amount.toString();
+            // Remove trailing .00 or .0
+            if (amountStr.includes('.')) {
+                amountStr = amountStr.replace(/\.?0+$/, '');
+            }
+            currentAmountString = amountStr.replace('.', ',');
+            if (currentAmountString === '') currentAmountString = '0';
             editAmountDisplay.textContent = formatAmountForDisplay(currentAmountString);
             
             // Set currency label
@@ -904,18 +907,24 @@
             if (key === '.') {
                 // Add decimal point if not already present
                 if (!currentAmountString.includes(',')) {
-                    currentAmountString += ',';
+                    // If it's just "0", replace with "0,"
+                    if (currentAmountString === '0') {
+                        currentAmountString = '0,';
+                    } else {
+                        currentAmountString += ',';
+                    }
                 }
             } else {
                 // Add digit
                 if (currentAmountString === '0') {
+                    // Replace initial 0 with the digit
                     currentAmountString = key;
                 } else {
                     // Check if we already have 2 decimal places
                     if (currentAmountString.includes(',')) {
                         const parts = currentAmountString.split(',');
                         if (parts[1] && parts[1].length >= 2) {
-                            return; // Don't add more digits
+                            return; // Don't add more digits after 2 decimal places
                         }
                     }
                     currentAmountString += key;
@@ -927,7 +936,7 @@
 
         // Handle backspace
         function handleBackspace() {
-            if (!currentEditingSpending || currentAmountString.length === 0) return;
+            if (!currentEditingSpending) return;
             
             // Haptic feedback
             if (tgWebApp && tgWebApp.HapticFeedback) {
@@ -940,6 +949,9 @@
                 }
             }
 
+            // Can't delete if only "0"
+            if (currentAmountString === '0') return;
+            
             currentAmountString = currentAmountString.slice(0, -1);
             if (currentAmountString === '' || currentAmountString === ',') {
                 currentAmountString = '0';
@@ -2368,13 +2380,14 @@
         }
 
         .keyboard-key {
-            font-size: 36px;
+            font-size: 32px;
             border-radius: 10px;
+            aspect-ratio: 108 / 60;
         }
 
         .keyboard-save-icon {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
         }
     }
 
@@ -2431,13 +2444,14 @@
         }
 
         .keyboard-key {
-            font-size: 32px;
+            font-size: 28px;
             border-radius: 8px;
+            aspect-ratio: 108 / 56;
         }
 
         .keyboard-save-icon {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
         }
     }
 
