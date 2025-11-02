@@ -950,10 +950,9 @@
         // Set up keyboard listeners
         if (keyboardKeys && keyboardKeys.length > 0) {
             keyboardKeys.forEach(key => {
-                key.addEventListener('click', (e) => {
+                key.addEventListener('click', () => {
                     const keyValue = key.getAttribute('data-key');
                     if (keyValue) {
-                        createRipple(e, key);
                         handleKeyboardInput(keyValue);
                     }
                 });
@@ -962,16 +961,12 @@
 
         // Backspace button
         if (backspaceButton) {
-            backspaceButton.addEventListener('click', (e) => {
-                createRipple(e, backspaceButton);
-                handleBackspace();
-            });
+            backspaceButton.addEventListener('click', handleBackspace);
         }
 
         // Name field interaction
         if (editNameButton && editNameInput) {
-            editNameButton.addEventListener('click', (e) => {
-                createRipple(e, editNameButton);
+            editNameButton.addEventListener('click', () => {
                 editNameButton.style.display = 'none';
                 editNameInput.style.display = 'block';
                 editNameInput.focus();
@@ -1005,10 +1000,7 @@
 
         // Close popup when clicking X button
         if (closeEditButton) {
-            closeEditButton.addEventListener('click', (e) => {
-                createRipple(e, closeEditButton);
-                closeEditView();
-            });
+            closeEditButton.addEventListener('click', closeEditView);
         }
 
         // Don't close on overlay click (full-screen design)
@@ -1104,16 +1096,10 @@
         }
 
         if (saveButton) {
-            saveButton.addEventListener('click', (e) => {
-                createRipple(e, saveButton);
-                saveTransaction();
-            });
+            saveButton.addEventListener('click', saveTransaction);
         }
         if (deleteButton) {
-            deleteButton.addEventListener('click', (e) => {
-                createRipple(e, deleteButton);
-                deleteTransaction();
-            });
+            deleteButton.addEventListener('click', deleteTransaction);
         }
 
         // Period dropdown functionality
@@ -2305,8 +2291,6 @@
         transition: background-color 0.2s, transform 0.1s;
         font-family: 'Nunito', sans-serif;
         padding: 0;
-        position: relative;
-        overflow: hidden;
     }
 
     .keyboard-key:active {
@@ -2328,6 +2312,133 @@
         height: 48px;
         display: block;
         filter: brightness(0) invert(1); /* Make icon white */
+    }
+
+    /* Responsive styles for shorter devices */
+    @media (max-height: 750px) {
+        .edit-header {
+            padding: 16px 20px 12px 20px;
+        }
+
+        .edit-title {
+            font-size: 20px;
+        }
+
+        .edit-amount-section {
+            padding: 16px 20px;
+            padding-bottom: 8px;
+        }
+
+        .edit-amount-display {
+            font-size: 42px;
+        }
+
+        .edit-currency-label {
+            font-size: 20px;
+        }
+
+        .edit-backspace-button {
+            width: 40px;
+            height: 40px;
+        }
+
+        .edit-backspace-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .edit-name-section {
+            padding: 0 20px;
+            padding-bottom: 12px;
+        }
+
+        .edit-name-button {
+            padding: 12px;
+        }
+
+        .edit-keyboard {
+            margin-bottom: 2vh;
+            padding: 12px 20px;
+            padding-bottom: max(12px, calc(env(safe-area-inset-bottom) + 12px));
+            gap: 10px;
+        }
+
+        .keyboard-row {
+            gap: 10px;
+        }
+
+        .keyboard-key {
+            font-size: 36px;
+            border-radius: 10px;
+        }
+
+        .keyboard-save-icon {
+            width: 40px;
+            height: 40px;
+        }
+    }
+
+    @media (max-height: 670px) {
+        .edit-header {
+            padding: 12px 20px 8px 20px;
+        }
+
+        .edit-title {
+            font-size: 18px;
+        }
+
+        .edit-amount-section {
+            padding: 12px 20px;
+            padding-bottom: 6px;
+        }
+
+        .edit-amount-display {
+            font-size: 36px;
+        }
+
+        .edit-currency-label {
+            font-size: 18px;
+        }
+
+        .edit-backspace-button {
+            width: 36px;
+            height: 36px;
+        }
+
+        .edit-backspace-icon {
+            width: 22px;
+            height: 22px;
+        }
+
+        .edit-name-section {
+            padding: 0 20px;
+            padding-bottom: 8px;
+        }
+
+        .edit-name-button {
+            padding: 10px;
+        }
+
+        .edit-keyboard {
+            margin-bottom: 1vh;
+            padding: 8px 20px;
+            padding-bottom: max(8px, calc(env(safe-area-inset-bottom) + 8px));
+            gap: 8px;
+        }
+
+        .keyboard-row {
+            gap: 8px;
+        }
+
+        .keyboard-key {
+            font-size: 32px;
+            border-radius: 8px;
+        }
+
+        .keyboard-save-icon {
+            width: 36px;
+            height: 36px;
+        }
     }
 
     /* Settings Tab Styles */
