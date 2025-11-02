@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="/tabs.js"></script>
 </head>
 <body>
 <div id="app">
@@ -397,94 +398,48 @@
     // Store current currency code globally
     let currentCurrencyCode = 'USD'; // Default to USD
 
-    // Function to create ripple effect
-    function createRipple(event, element) {
-        const ripple = document.createElement('span');
-        const rect = element.getBoundingClientRect();
-        const size = Math.max(rect.width, rect.height);
-        const x = event.clientX - rect.left - size / 2;
-        const y = event.clientY - rect.top - size / 2;
-        
-        ripple.style.width = ripple.style.height = size + 'px';
-        ripple.style.left = x + 'px';
-        ripple.style.top = y + 'px';
-        ripple.classList.add('ripple');
-        
-        element.appendChild(ripple);
-        
-        // Remove ripple after animation
-        setTimeout(() => {
-            ripple.remove();
-        }, 600);
+    // Initialize tab manager
+    tabManager.init();
+
+    // Register tab handlers
+    tabManager.registerHandler(tabManager.TABS.SPENDINGS, () => {
+        // Reload Spendings data when switching to Spendings tab
+        // This ensures currency is up-to-date if it was changed in settings
+        if (spendingsLoadData) {
+            // Check if currency changed and we need to reload
+            if (tabManager.hasCurrencyChanged()) {
+                spendingsLoadData(false, false); // Disable haptics for background reload
+            } else {
+                spendingsLoadData();
+            }
+        }
+    });
+
+    tabManager.registerHandler(tabManager.TABS.CATEGORIZE, () => {
+        // Load categorize data when switching to Categorize tab
+        if (categorizeLoadFunctions) {
+            categorizeLoadFunctions();
+        }
+    });
+
+    tabManager.registerHandler(tabManager.TABS.INSIGHTS, () => {
+        // Load Insights data when switching to Insights tab
+        if (insightsLoadData) {
+            insightsLoadData();
+        }
+    });
+
+    tabManager.registerHandler(tabManager.TABS.SETTINGS, () => {
+        // Load current currency when switching to Settings tab
+        if (loadCurrentCurrency) {
+            loadCurrentCurrency();
+        }
+    });
+
+    // Helper function to get active tab index (for other parts of code)
+    function getActiveTabIndex() {
+        return tabManager.getActiveTabIndex();
     }
-
-    // Tab switching functionality
-    function initTabs() {
-        const tabItems = document.querySelectorAll('.tab-item');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        tabItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                const tabIndex = item.getAttribute('data-tab');
-                
-                // Create ripple effect
-                createRipple(e, item);
-                
-                // Haptic feedback when clicking tab
-                if (tgWebApp && tgWebApp.HapticFeedback) {
-                    try {
-                        tgWebApp.HapticFeedback.impactOccurred('light');
-                    } catch (e) {
-                        // Fallback if HapticFeedback not available
-                        if (tgWebApp.impactOccurred) {
-                            tgWebApp.impactOccurred('light');
-                        }
-                    }
-                }
-                
-                // Remove active class from all tabs and contents
-                tabItems.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(c => c.classList.remove('active'));
-                
-                // Add active class to clicked tab and corresponding content
-                item.classList.add('active');
-                const activeContent = document.querySelector(`.tab-content[data-tab="${tabIndex}"]`);
-                if (activeContent) {
-                    activeContent.classList.add('active');
-                }
-
-                // Tab-specific data loading
-                if (tabIndex === '0' && spendingsLoadData) {
-                    // Reload Spendings data when switching to Spendings tab
-                    // This ensures currency is up-to-date if it was changed in settings
-                    spendingsLoadData();
-                } else if (tabIndex === '1' && categorizeLoadFunctions) {
-                    // Load categorize data when switching to Categorize tab
-                    categorizeLoadFunctions();
-                } else if (tabIndex === '2' && insightsLoadData) {
-                    // Load Insights data when switching to Insights tab
-                    insightsLoadData();
-                } else if (tabIndex === '3' && loadCurrentCurrency) {
-                    // Load current currency when switching to Settings tab
-                    loadCurrentCurrency().then(() => {
-                        // Reload spendings data with updated currency if we're on spendings tab
-                        // (in case user switches back to spendings tab after settings)
-                        // Disable haptics for background reload
-                        if (spendingsLoadData) {
-                            spendingsLoadData(false, false);
-                        }
-                        // Also reload insights data with updated currency
-                        if (insightsLoadData) {
-                            insightsLoadData();
-                        }
-                    });
-                }
-            });
-        });
-    }
-
-    // Initialize tabs on load
-    initTabs();
 
     function setError(msg) {
         totalEl.innerHTML = '<span class="currency-label">Error:</span> <span class="amount-value">' + msg + '</span>';
@@ -812,8 +767,7 @@
                     // Pattern aligned to card animation frames (approx. 100–120ms apart)
                     // Only play haptics if enabled and we're on the Spendings tab
                     if (enableHaptics && tgWebApp && tgWebApp.HapticFeedback) {
-                        const activeTab = document.querySelector('.tab-content.active');
-                        if (activeTab && activeTab.getAttribute('data-tab') === '0') {
+                        if (getActiveTabIndex() === tabManager.TABS.SPENDINGS) {
                             const hapticPattern = [
                                 { timing: 0, type: 'medium' },      // 1️⃣ Medium impact (intensity ~0.55, 20% gentler) - t = 0ms
                                 { timing: 120, type: 'soft' },       // 2️⃣ Soft-medium (intensity ~0.35, 20% gentler) - t = +120ms
@@ -2048,15 +2002,16 @@
                         if (currencyValueSpan) {
                             currencyValueSpan.textContent = currentCurrency.code;
                         }
-                        // Reload spendings data if currency changed and we're on spendings tab
-                        // Disable haptics for background currency update
-                        const activeTab = document.querySelector('.tab-content.active');
+                        // Mark currency as changed and reload data if on relevant tabs
                         if (previousCurrency !== currentCurrency.code) {
-                            if (spendingsLoadData && activeTab && activeTab.getAttribute('data-tab') === '0') {
+                            tabManager.markCurrencyChanged();
+                            const activeTabIndex = getActiveTabIndex();
+                            // Reload spendings data if on spendings tab
+                            if (spendingsLoadData && activeTabIndex === tabManager.TABS.SPENDINGS) {
                                 spendingsLoadData(false, false);
                             }
                             // Also reload insights if on insights tab
-                            if (insightsLoadData && activeTab && activeTab.getAttribute('data-tab') === '2') {
+                            if (insightsLoadData && activeTabIndex === tabManager.TABS.INSIGHTS) {
                                 insightsLoadData();
                             }
                         }

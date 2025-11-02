@@ -4,6 +4,7 @@
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/assets/(.*)", "dest": "/assets/$1" },
     { "src": "/styles.css", "dest": "/styles.css" },
+    { "src": "/tabs.js", "dest": "/tabs.js" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
