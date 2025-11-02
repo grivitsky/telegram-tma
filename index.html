@@ -1539,9 +1539,9 @@
 
         function renderCategoryButtons() {
             categorizeButtons.innerHTML = '';
-            categories.forEach(category => {
+            categories.forEach((category, index) => {
                 const button = document.createElement('button');
-                button.className = 'category-button';
+                button.className = 'category-button categorize-button-hidden';
                 // Background: category color with 24% opacity
                 button.style.backgroundColor = hexToRgba(category.color, 0.24);
                 // Text color: category color 20% darker
@@ -1552,6 +1552,12 @@
                 `;
                 button.addEventListener('click', () => assignCategory(category.id));
                 categorizeButtons.appendChild(button);
+                
+                // Trigger reveal animation with stagger effect
+                setTimeout(() => {
+                    button.classList.remove('categorize-button-hidden');
+                    button.classList.add('categorize-button-reveal');
+                }, index * 30); // 30ms delay between each button
             });
             
             // Ensure buttons container is visible
@@ -1619,7 +1625,7 @@
             const transDate = new Date(spending.created_at || spending.date_of_log);
             
             categorizeTransaction.innerHTML = `
-                <div class="categorize-transaction-item" id="current-transaction-card">
+                <div class="categorize-transaction-item categorize-card-hidden" id="current-transaction-card">
                     <div class="card-top">
                         <div class="info">
                             <div class="name">${spending.name || 'Unnamed'}</div>
@@ -1638,6 +1644,15 @@
             categorizeComplete.style.display = 'none';
             categorizeTransaction.style.display = 'block';
             updateCounter();
+            
+            // Trigger reveal animation
+            setTimeout(() => {
+                const currentCard = document.getElementById('current-transaction-card');
+                if (currentCard) {
+                    currentCard.classList.remove('categorize-card-hidden');
+                    currentCard.classList.add('categorize-card-reveal');
+                }
+            }, 50);
         }
 
         function fadeOutCard(callback) {
@@ -1674,14 +1689,29 @@
                     return;
                 }
 
-                // Haptic feedback for success
+                // Haptic feedback for success - Apple Pay style (double tap pattern)
                 if (tgWebApp && tgWebApp.HapticFeedback) {
                     try {
-                        tgWebApp.HapticFeedback.notificationOccurred('success');
+                        // Apple Pay uses medium impact followed by light impact in quick succession
+                        tgWebApp.HapticFeedback.impactOccurred('medium');
+                        setTimeout(() => {
+                            try {
+                                tgWebApp.HapticFeedback.impactOccurred('light');
+                            } catch (e) {
+                                if (tgWebApp.impactOccurred) {
+                                    tgWebApp.impactOccurred('light');
+                                }
+                            }
+                        }, 100); // 100ms delay for double tap effect
                     } catch (e) {
                         // Fallback if HapticFeedback not available
-                        if (tgWebApp.notificationOccurred) {
-                            tgWebApp.notificationOccurred('success');
+                        if (tgWebApp.impactOccurred) {
+                            tgWebApp.impactOccurred('medium');
+                            setTimeout(() => {
+                                if (tgWebApp.impactOccurred) {
+                                    tgWebApp.impactOccurred('light');
+                                }
+                            }, 100);
                         }
                     }
                 }
@@ -3481,6 +3511,47 @@
         background: linear-gradient(90deg, #E0E0E0 25%, #F5F5F5 50%, #E0E0E0 75%);
         background-size: 200% 100%;
         animation: skeleton-loading 1.5s ease-in-out infinite;
+    }
+
+    /* Categorize Reveal Animations */
+    .categorize-card-hidden {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    .categorize-card-reveal {
+        animation: categorizeCardReveal 0.4s ease-out forwards;
+    }
+
+    @keyframes categorizeCardReveal {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .categorize-button-hidden {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    .categorize-button-reveal {
+        animation: categorizeButtonReveal 0.4s ease-out forwards;
+    }
+
+    @keyframes categorizeButtonReveal {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
 </body>
