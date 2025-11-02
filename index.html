@@ -154,7 +154,7 @@
                     <button id="delete-button" class="edit-header-button edit-delete-button">
                         <img src="/assets/delete.svg" alt="Delete" class="edit-icon" />
                     </button>
-                </div>
+                    </div>
                 
                 <!-- Amount Display -->
                 <div class="edit-amount-section">
@@ -950,9 +950,10 @@
         // Set up keyboard listeners
         if (keyboardKeys && keyboardKeys.length > 0) {
             keyboardKeys.forEach(key => {
-                key.addEventListener('click', () => {
+                key.addEventListener('click', (e) => {
                     const keyValue = key.getAttribute('data-key');
                     if (keyValue) {
+                        createRipple(e, key);
                         handleKeyboardInput(keyValue);
                     }
                 });
@@ -961,12 +962,16 @@
 
         // Backspace button
         if (backspaceButton) {
-            backspaceButton.addEventListener('click', handleBackspace);
+            backspaceButton.addEventListener('click', (e) => {
+                createRipple(e, backspaceButton);
+                handleBackspace();
+            });
         }
 
         // Name field interaction
         if (editNameButton && editNameInput) {
-            editNameButton.addEventListener('click', () => {
+            editNameButton.addEventListener('click', (e) => {
+                createRipple(e, editNameButton);
                 editNameButton.style.display = 'none';
                 editNameInput.style.display = 'block';
                 editNameInput.focus();
@@ -1000,7 +1005,10 @@
 
         // Close popup when clicking X button
         if (closeEditButton) {
-            closeEditButton.addEventListener('click', closeEditView);
+            closeEditButton.addEventListener('click', (e) => {
+                createRipple(e, closeEditButton);
+                closeEditView();
+            });
         }
 
         // Don't close on overlay click (full-screen design)
@@ -1096,10 +1104,16 @@
         }
 
         if (saveButton) {
-            saveButton.addEventListener('click', saveTransaction);
+            saveButton.addEventListener('click', (e) => {
+                createRipple(e, saveButton);
+                saveTransaction();
+            });
         }
         if (deleteButton) {
-            deleteButton.addEventListener('click', deleteTransaction);
+            deleteButton.addEventListener('click', (e) => {
+                createRipple(e, deleteButton);
+                deleteTransaction();
+            });
         }
 
         // Period dropdown functionality
@@ -2260,6 +2274,7 @@
     /* Custom Keyboard */
     .edit-keyboard {
         margin-top: auto;
+        margin-bottom: 4vh;
         padding: 16px 20px;
         padding-bottom: max(16px, calc(env(safe-area-inset-bottom) + 16px));
         display: flex;
@@ -2290,6 +2305,8 @@
         transition: background-color 0.2s, transform 0.1s;
         font-family: 'Nunito', sans-serif;
         padding: 0;
+        position: relative;
+        overflow: hidden;
     }
 
     .keyboard-key:active {
