@@ -145,13 +145,60 @@
         <!-- Edit Transaction Popup -->
         <div id="edit-transaction-overlay" class="edit-transaction-overlay" style="display: none;">
             <div id="edit-transaction-popup" class="edit-transaction-popup">
-                <button id="close-edit-button" class="close-edit-button">×</button>
-                <div id="edit-container">
-                    <input type="number" id="edit-amount" class="edit-input amount-input" placeholder="Amount" step="0.01" />
-                    <input type="text" id="edit-name" class="edit-input name-input" placeholder="Transaction name" />
-                    <div id="edit-buttons">
-                        <button id="save-button" class="edit-button save-button">Save</button>
-                        <button id="delete-button" class="edit-button delete-button">Delete</button>
+                <!-- Header -->
+                <div class="edit-header">
+                    <button id="close-edit-button" class="edit-header-button edit-close-button">
+                        <img src="/assets/X.svg" alt="Close" class="edit-icon" />
+                    </button>
+                    <h2 class="edit-title">Edit</h2>
+                    <button id="delete-button" class="edit-header-button edit-delete-button">
+                        <img src="/assets/delete.svg" alt="Delete" class="edit-icon" />
+                    </button>
+                </div>
+                
+                <!-- Amount Display -->
+                <div class="edit-amount-section">
+                    <div class="edit-amount-wrapper">
+                        <span class="edit-currency-label" id="edit-currency-label">PLN</span>
+                        <span class="edit-amount-display" id="edit-amount-display">0,00</span>
+                        <button id="backspace-button" class="edit-backspace-button">
+                            <img src="/assets/backspace.svg" alt="Backspace" class="edit-backspace-icon" />
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Transaction Name Field -->
+                <div class="edit-name-section">
+                    <button id="edit-name-button" class="edit-name-button">
+                        <img src="/assets/AA.svg" alt="Name" class="edit-name-icon" />
+                        <span class="edit-name-placeholder" id="edit-name-display">Name</span>
+                    </button>
+                    <input type="text" id="edit-name" class="edit-name-input" placeholder="Transaction name" style="display: none;" />
+                </div>
+                
+                <!-- Custom Numeric Keyboard -->
+                <div class="edit-keyboard">
+                    <div class="keyboard-row">
+                        <button class="keyboard-key" data-key="1">1</button>
+                        <button class="keyboard-key" data-key="2">2</button>
+                        <button class="keyboard-key" data-key="3">3</button>
+                    </div>
+                    <div class="keyboard-row">
+                        <button class="keyboard-key" data-key="4">4</button>
+                        <button class="keyboard-key" data-key="5">5</button>
+                        <button class="keyboard-key" data-key="6">6</button>
+                    </div>
+                    <div class="keyboard-row">
+                        <button class="keyboard-key" data-key="7">7</button>
+                        <button class="keyboard-key" data-key="8">8</button>
+                        <button class="keyboard-key" data-key="9">9</button>
+                    </div>
+                    <div class="keyboard-row">
+                        <button class="keyboard-key" data-key=".">.</button>
+                        <button class="keyboard-key" data-key="0">0</button>
+                        <button id="save-button" class="keyboard-key keyboard-save">
+                            <img src="/assets/check-done.svg" alt="Done" class="keyboard-save-icon" />
+                        </button>
                     </div>
                 </div>
             </div>
@@ -763,17 +810,60 @@
 
         // Edit Transaction functionality
         let currentEditingSpending = null;
+        let currentAmountString = ''; // Store amount as string for custom keyboard
+        
         const editOverlay = document.getElementById('edit-transaction-overlay');
-        const editAmountInput = document.getElementById('edit-amount');
+        const editAmountDisplay = document.getElementById('edit-amount-display');
+        const editCurrencyLabel = document.getElementById('edit-currency-label');
         const editNameInput = document.getElementById('edit-name');
+        const editNameButton = document.getElementById('edit-name-button');
+        const editNameDisplay = document.getElementById('edit-name-display');
         const saveButton = document.getElementById('save-button');
         const deleteButton = document.getElementById('delete-button');
         const closeEditButton = document.getElementById('close-edit-button');
+        const backspaceButton = document.getElementById('backspace-button');
+        const keyboardKeys = document.querySelectorAll('.keyboard-key[data-key]');
+
+        // Format amount for display (with comma as decimal separator)
+        function formatAmountForDisplay(amount) {
+            if (!amount || amount === '0' || amount === '0,' || amount === '') return '0,00';
+            // Replace dot with comma for display
+            let formatted = amount.toString().replace('.', ',');
+            // Ensure two decimal places
+            if (formatted.includes(',')) {
+                const parts = formatted.split(',');
+                const integerPart = parts[0] || '0';
+                const decimalPart = parts[1] || '';
+                return integerPart + ',' + decimalPart.padEnd(2, '0').substring(0, 2);
+            }
+            return formatted + ',00';
+        }
+
+        // Convert display amount (with comma) to number
+        function parseAmountFromDisplay(amountStr) {
+            return parseFloat(amountStr.replace(',', '.'));
+        }
 
         function openEditView(spending) {
             currentEditingSpending = spending;
-            editAmountInput.value = spending.amount;
-            editNameInput.value = spending.name;
+            
+            // Initialize amount display
+            const amount = Math.abs(Number(spending.amount));
+            currentAmountString = amount.toFixed(2).replace('.', ',');
+            editAmountDisplay.textContent = formatAmountForDisplay(currentAmountString);
+            
+            // Set currency label
+            editCurrencyLabel.textContent = currentCurrencyCode;
+            
+            // Initialize name display
+            const nameValue = spending.name || '';
+            editNameInput.value = nameValue;
+            editNameDisplay.textContent = nameValue || 'Name';
+            editNameDisplay.style.color = nameValue ? '#000000' : '#A6A6A6';
+            
+            // Hide name input initially
+            editNameInput.style.display = 'none';
+            editNameButton.style.display = 'flex';
             
             // Show popup overlay
             editOverlay.style.display = 'flex';
@@ -792,7 +882,120 @@
 
         function closeEditView() {
             currentEditingSpending = null;
+            currentAmountString = '';
             editOverlay.style.display = 'none';
+        }
+
+        // Handle numeric keyboard input
+        function handleKeyboardInput(key) {
+            if (!currentEditingSpending) return;
+            
+            // Haptic feedback for key press
+            if (tgWebApp && tgWebApp.HapticFeedback) {
+                try {
+                    tgWebApp.HapticFeedback.impactOccurred('light');
+                } catch (e) {
+                    if (tgWebApp.impactOccurred) {
+                        tgWebApp.impactOccurred('light');
+                    }
+                }
+            }
+
+            if (key === '.') {
+                // Add decimal point if not already present
+                if (!currentAmountString.includes(',')) {
+                    currentAmountString += ',';
+                }
+            } else {
+                // Add digit
+                if (currentAmountString === '0') {
+                    currentAmountString = key;
+                } else {
+                    // Check if we already have 2 decimal places
+                    if (currentAmountString.includes(',')) {
+                        const parts = currentAmountString.split(',');
+                        if (parts[1] && parts[1].length >= 2) {
+                            return; // Don't add more digits
+                        }
+                    }
+                    currentAmountString += key;
+                }
+            }
+            
+            editAmountDisplay.textContent = formatAmountForDisplay(currentAmountString);
+        }
+
+        // Handle backspace
+        function handleBackspace() {
+            if (!currentEditingSpending || currentAmountString.length === 0) return;
+            
+            // Haptic feedback
+            if (tgWebApp && tgWebApp.HapticFeedback) {
+                try {
+                    tgWebApp.HapticFeedback.impactOccurred('light');
+                } catch (e) {
+                    if (tgWebApp.impactOccurred) {
+                        tgWebApp.impactOccurred('light');
+                    }
+                }
+            }
+
+            currentAmountString = currentAmountString.slice(0, -1);
+            if (currentAmountString === '' || currentAmountString === ',') {
+                currentAmountString = '0';
+            }
+            editAmountDisplay.textContent = formatAmountForDisplay(currentAmountString);
+        }
+
+        // Set up keyboard listeners
+        if (keyboardKeys && keyboardKeys.length > 0) {
+            keyboardKeys.forEach(key => {
+                key.addEventListener('click', () => {
+                    const keyValue = key.getAttribute('data-key');
+                    if (keyValue) {
+                        handleKeyboardInput(keyValue);
+                    }
+                });
+            });
+        }
+
+        // Backspace button
+        if (backspaceButton) {
+            backspaceButton.addEventListener('click', handleBackspace);
+        }
+
+        // Name field interaction
+        if (editNameButton && editNameInput) {
+            editNameButton.addEventListener('click', () => {
+                editNameButton.style.display = 'none';
+                editNameInput.style.display = 'block';
+                editNameInput.focus();
+                
+                // Haptic feedback
+                if (tgWebApp && tgWebApp.HapticFeedback) {
+                    try {
+                        tgWebApp.HapticFeedback.impactOccurred('light');
+                    } catch (e) {
+                        if (tgWebApp.impactOccurred) {
+                            tgWebApp.impactOccurred('light');
+                        }
+                    }
+                }
+            });
+
+            editNameInput.addEventListener('blur', () => {
+                const value = editNameInput.value.trim();
+                editNameDisplay.textContent = value || 'Name';
+                editNameDisplay.style.color = value ? '#000000' : '#A6A6A6';
+                editNameInput.style.display = 'none';
+                editNameButton.style.display = 'flex';
+            });
+
+            editNameInput.addEventListener('input', () => {
+                const value = editNameInput.value;
+                editNameDisplay.textContent = value || 'Name';
+                editNameDisplay.style.color = value ? '#000000' : '#A6A6A6';
+            });
         }
 
         // Close popup when clicking X button
@@ -800,22 +1003,15 @@
             closeEditButton.addEventListener('click', closeEditView);
         }
 
-        // Close popup when clicking on overlay background
-        if (editOverlay) {
-            editOverlay.addEventListener('click', (e) => {
-                if (e.target === editOverlay) {
-                    closeEditView();
-                }
-            });
-        }
+        // Don't close on overlay click (full-screen design)
 
         async function saveTransaction() {
             if (!currentEditingSpending) return;
 
-            const newAmount = parseFloat(editAmountInput.value);
+            const newAmount = parseAmountFromDisplay(currentAmountString);
             const newName = editNameInput.value.trim();
 
-            if (isNaN(newAmount) || !newName) {
+            if (isNaN(newAmount) || newAmount <= 0 || !newName) {
                 alert('Please fill in both amount and name');
                 return;
             }
@@ -1871,127 +2067,246 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(0, 0, 0, 0.5);
+        background-color: #ffffff;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
         z-index: 2000;
-        padding: 20px;
+        overflow-y: auto;
     }
 
     .edit-transaction-popup {
         background: #ffffff;
-        border-radius: 20px;
         width: 100%;
-        max-width: 400px;
-        padding: 24px;
+        max-width: 600px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
         position: relative;
     }
 
-    .close-edit-button {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        width: 32px;
-        height: 32px;
+    /* Header */
+    .edit-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        position: relative;
+    }
+
+    .edit-header-button {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
         border: none;
-        background: transparent;
-        font-size: 28px;
-        color: #999999;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 50%;
-        transition: background-color 0.2s, color 0.2s;
-        line-height: 1;
         padding: 0;
+        transition: background-color 0.2s, transform 0.1s;
+        flex-shrink: 0;
     }
 
-    .close-edit-button:hover {
-        background-color: #f5f5f5;
+    .edit-close-button {
+        background-color: #E0E0E0;
+    }
+
+    .edit-close-button:active {
+        background-color: #D0D0D0;
+        transform: scale(0.95);
+    }
+
+    .edit-delete-button {
+        background-color: #FE473A;
+    }
+
+    .edit-delete-button:active {
+        background-color: #E53935;
+        transform: scale(0.95);
+    }
+
+    .edit-icon {
+        width: 18px;
+        height: 18px;
+        display: block;
+    }
+
+    .edit-title {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 18px;
+        font-weight: 700;
         color: #000000;
+        margin: 0;
     }
 
-    .close-edit-button:active {
-        background-color: #e8e8e8;
+    /* Amount Section */
+    .edit-amount-section {
+        padding: 20px;
+        padding-bottom: 16px;
     }
 
-    #edit-container {
-        width: 100%;
+    .edit-amount-wrapper {
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 24px;
-        padding-top: 8px;
+        align-items: baseline;
+        gap: 8px;
+        position: relative;
     }
 
-    .edit-input {
+    .edit-currency-label {
+        font-size: 24px;
+        font-weight: 600;
+        color: #A6A6A6;
+        line-height: 1;
+    }
+
+    .edit-amount-display {
+        font-size: 50px;
+        font-weight: 600;
+        color: #000000;
+        line-height: 1;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .edit-backspace-button {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #E0E0E0;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        transition: background-color 0.2s, transform 0.1s;
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+
+    .edit-backspace-button:active {
+        background-color: #D0D0D0;
+        transform: scale(0.95);
+    }
+
+    .edit-backspace-icon {
+        width: 27px;
+        height: 27px;
+        display: block;
+    }
+
+    /* Name Section */
+    .edit-name-section {
+        padding: 0 20px;
+        padding-bottom: 24px;
+    }
+
+    .edit-name-button {
         width: 100%;
         padding: 16px;
-        font-size: 18px;
+        background-color: #F5F5F5;
+        border: none;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+        text-align: left;
+    }
+
+    .edit-name-button:active {
+        background-color: #E8E8E8;
+        transform: scale(0.98);
+    }
+
+    .edit-name-icon {
+        width: 20px;
+        height: 20px;
+        display: block;
+        flex-shrink: 0;
+    }
+
+    .edit-name-placeholder {
+        font-size: 16px;
+        font-weight: 400;
+        color: #A6A6A6;
+    }
+
+    .edit-name-input {
+        width: 100%;
+        padding: 16px;
+        font-size: 16px;
         border: 2px solid #e0e0e0;
         border-radius: 12px;
         background: #ffffff;
         color: #000000;
-        text-align: center;
         font-family: 'Nunito', sans-serif;
     }
 
-    .edit-input:focus {
+    .edit-name-input:focus {
         outline: none;
         border-color: #42A5F5;
     }
 
-    .amount-input {
-        font-size: 32px;
-        font-weight: 600;
+    /* Custom Keyboard */
+    .edit-keyboard {
+        margin-top: auto;
+        padding: 20px;
+        padding-bottom: max(24px, calc(env(safe-area-inset-bottom) + 24px));
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
 
-    .name-input {
-        font-size: 18px;
-    }
-
-    #edit-buttons {
-        width: 100%;
+    .keyboard-row {
         display: flex;
         gap: 12px;
-        margin-top: 8px;
+        justify-content: space-between;
     }
 
-    .edit-button {
+    .keyboard-key {
         flex: 1;
-        padding: 16px;
-        font-size: 16px;
-        font-weight: 600;
+        aspect-ratio: 1;
+        max-width: calc(33.333% - 8px);
+        min-height: 60px;
+        background-color: #E0E0E0;
         border: none;
         border-radius: 12px;
+        font-size: 24px;
+        font-weight: 600;
+        color: #000000;
         cursor: pointer;
-        transition: transform 0.1s, opacity 0.1s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s, transform 0.1s;
         font-family: 'Nunito', sans-serif;
+        padding: 0;
     }
 
-    .edit-button:active {
-        transform: scale(0.98);
-        opacity: 0.9;
+    .keyboard-key:active {
+        background-color: #D0D0D0;
+        transform: scale(0.95);
     }
 
-    .save-button {
-        background-color: #42A5F5;
-        color: #ffffff;
+    .keyboard-save {
+        background-color: #1F1F1F;
     }
 
-    .save-button:hover {
-        background-color: #2196F3;
+    .keyboard-save:active {
+        background-color: #000000;
+        transform: scale(0.95);
     }
 
-    .delete-button {
-        background-color: #E57373;
-        color: #ffffff;
-    }
-
-    .delete-button:hover {
-        background-color: #EF5350;
+    .keyboard-save-icon {
+        width: 24px;
+        height: 24px;
+        display: block;
+        filter: brightness(0) invert(1); /* Make icon white */
     }
 
     /* Settings Tab Styles */
