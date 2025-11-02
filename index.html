@@ -225,13 +225,15 @@
         <!-- Tab 2 Content (Categorize) -->
         <div class="tab-content" data-tab="1">
             <div id="categorize-container">
-                <div class="categorize-header">
-                    <h2 class="categorize-title">Categorize</h2>
-                    <div id="categorize-counter" class="categorize-counter">10 items left</div>
-                </div>
-                
-                <div id="categorize-card-wrapper" class="categorize-card-wrapper">
-                    <div id="categorize-transaction" class="categorize-transaction"></div>
+                <div class="categorize-sticky-section">
+                    <div class="categorize-header">
+                        <h2 class="categorize-title">Categorize</h2>
+                        <div id="categorize-counter" class="categorize-counter">10 items left</div>
+                    </div>
+                    
+                    <div id="categorize-card-wrapper" class="categorize-card-wrapper">
+                        <div id="categorize-transaction" class="categorize-transaction"></div>
+                    </div>
                 </div>
                 
                 <div id="categorize-categories" class="categorize-categories-section">
@@ -1554,8 +1556,8 @@
                         </div>
                     </div>
                     <div class="card-bottom">
-                        <div class="amount-label">Amount:</div>
-                        <div class="amount">-${formatAmount(Math.abs(Number(spending.amount)))} ${currentCurrencyCode}</div>
+                        <span class="amount-label">Amount:</span>
+                        <span class="amount">-${formatAmount(Math.abs(Number(spending.amount)))} ${currentCurrencyCode}</span>
                     </div>
                 </div>
             `;
@@ -1607,10 +1609,11 @@
                 }
                 e.preventDefault();
                 
-                // Apply transform with resistance
-                const resistance = 0.5;
-                currentCard.style.transform = `translateX(${diffX * resistance}px)`;
-                currentCard.style.opacity = 1 - Math.abs(diffX) / 600;
+                // Apply transform with smooth resistance
+                const resistance = 0.6;
+                const translateX = diffX * resistance;
+                currentCard.style.transform = `translateX(${translateX}px)`;
+                currentCard.style.opacity = Math.max(0.5, 1 - Math.abs(diffX) / 800);
             }
         }
 
@@ -1646,10 +1649,18 @@
                     });
                 }
             } else {
-                // Snap back
+                // Snap back with smooth transition
                 currentCard.classList.remove('swiping');
+                currentCard.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out';
                 currentCard.style.transform = '';
                 currentCard.style.opacity = '';
+                
+                // Remove inline transition after animation
+                setTimeout(() => {
+                    if (currentCard) {
+                        currentCard.style.transition = '';
+                    }
+                }, 300);
             }
 
             isSwiping = false;
@@ -1659,6 +1670,7 @@
             if (!currentCard) return;
             
             currentCard.classList.remove('swiping');
+            currentCard.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out';
             currentCard.classList.add(`swipe-out-${direction}`);
             
             setTimeout(() => {
@@ -2364,6 +2376,13 @@
         padding: 0;
     }
 
+    .categorize-sticky-section {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: white;
+    }
+
     .categorize-header {
         display: flex;
         justify-content: space-between;
@@ -2386,16 +2405,41 @@
     }
 
     .categorize-card-wrapper {
-        position: sticky;
-        top: 0;
-        z-index: 10;
         background: white;
-        padding: 0 20px 20px 20px;
+        padding-bottom: 20px;
         margin-bottom: 0;
+        overflow: hidden;
     }
 
     .categorize-transaction {
-        /* Container for card - no additional styling needed */
+        display: flex;
+        gap: 12px;
+        padding: 0 20px;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .categorize-transaction::before,
+    .categorize-transaction::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 30px;
+        height: calc(100% - 40px);
+        background: #EEEEF0;
+        border-radius: 20px;
+        opacity: 0.3;
+        pointer-events: none;
+    }
+
+    .categorize-transaction::before {
+        left: -5px;
+    }
+
+    .categorize-transaction::after {
+        right: -5px;
     }
 
     .categorize-transaction-item {
@@ -2405,8 +2449,12 @@
         padding: 24px;
         border-radius: 20px;
         position: relative;
-        transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out;
         touch-action: pan-y;
+        flex-shrink: 0;
+        width: calc(100% - 80px);
+        max-width: 100%;
+        z-index: 1;
     }
 
     .categorize-transaction-item.swiping {
@@ -2471,14 +2519,15 @@
 
     .categorize-transaction-item .card-bottom {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 8px;
     }
 
     .categorize-transaction-item .amount-label {
         font-size: 16px;
         font-weight: 600;
         color: #A6A6A6;
-        margin-bottom: 8px;
     }
 
     .categorize-transaction-item .amount {
@@ -2522,8 +2571,8 @@
         flex-direction: row;
         align-items: center;
         justify-content: flex-start;
-        padding: 20px 24px;
-        border-radius: 20px;
+        padding: 14px 20px;
+        border-radius: 16px;
         border: none;
         cursor: pointer;
         transition: transform 0.1s, opacity 0.1s;
@@ -2537,8 +2586,8 @@
     }
 
     .category-emoji {
-        font-size: 32px;
-        margin-right: 16px;
+        font-size: 24px;
+        margin-right: 12px;
         flex-shrink: 0;
     }
 
