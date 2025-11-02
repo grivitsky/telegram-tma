@@ -1544,14 +1544,19 @@
             
             categorizeTransaction.innerHTML = `
                 <div class="categorize-transaction-item" id="current-transaction-card">
-                    <div class="icon">
-                        <span class="icon-emoji">❔</span>
+                    <div class="card-top">
+                        <div class="info">
+                            <div class="name">${spending.name || 'Unnamed'}</div>
+                            <div class="time">${formatTime(transDate)}</div>
+                        </div>
+                        <div class="icon">
+                            <span class="icon-emoji">❔</span>
+                        </div>
                     </div>
-                    <div class="info">
-                        <div class="name">${spending.name || 'Unnamed'}</div>
-                        <div class="time">${formatTime(transDate)}</div>
+                    <div class="card-bottom">
+                        <div class="amount-label">Amount:</div>
+                        <div class="amount">-${formatAmount(Math.abs(Number(spending.amount)))} ${currentCurrencyCode}</div>
                     </div>
-                    <div class="amount">-${formatAmount(Math.abs(Number(spending.amount)))} ${currentCurrencyCode}</div>
                 </div>
             `;
 
@@ -2390,9 +2395,9 @@
 
     .categorize-transaction-item {
         display: flex;
-        align-items: center;
-        background: #F6F6F6;
-        padding: 16px;
+        flex-direction: column;
+        background: #EEEEF0;
+        padding: 24px;
         border-radius: 20px;
         position: relative;
         transition: transform 0.3s ease-out, opacity 0.3s ease-out;
@@ -2416,20 +2421,11 @@
         transform: translateX(100%);
     }
 
-    .categorize-transaction-item .icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
+    .categorize-transaction-item .card-top {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        margin-right: 16px;
-        background: transparent;
-    }
-
-    .categorize-transaction-item .icon-emoji {
-        font-size: 28px;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 32px;
     }
 
     .categorize-transaction-item .info {
@@ -2438,25 +2434,53 @@
     }
 
     .categorize-transaction-item .name {
-        font-size: 17px;
-        font-weight: 600;
+        font-size: 28px;
+        font-weight: 700;
         color: #000000;
-        margin-bottom: 4px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        margin-bottom: 8px;
+        line-height: 1.2;
     }
 
     .categorize-transaction-item .time {
-        font-size: 14px;
-        color: #8E8E93;
+        font-size: 17px;
+        font-weight: 400;
+        color: #B8B8BD;
+    }
+
+    .categorize-transaction-item .icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.5);
+        margin-left: 16px;
+    }
+
+    .categorize-transaction-item .icon-emoji {
+        font-size: 40px;
+        opacity: 0.4;
+    }
+
+    .categorize-transaction-item .card-bottom {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .categorize-transaction-item .amount-label {
+        font-size: 17px;
+        font-weight: 400;
+        color: #B8B8BD;
+        margin-bottom: 8px;
     }
 
     .categorize-transaction-item .amount {
-        font-size: 17px;
-        font-weight: 600;
+        font-size: 40px;
+        font-weight: 700;
         color: #000000;
-        white-space: nowrap;
+        line-height: 1;
     }
 
     .categorize-categories-section {
