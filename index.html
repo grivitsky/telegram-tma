@@ -1550,9 +1550,6 @@
                             <div class="name">${spending.name || 'Unnamed'}</div>
                             <div class="time">${formatTime(transDate)}</div>
                         </div>
-                        <div class="icon">
-                            <span class="icon-emoji">❔</span>
-                        </div>
                     </div>
                     <div class="card-bottom">
                         <div class="amount-label">Amount:</div>
@@ -2333,13 +2330,17 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
         width: 100%;
         margin-bottom: 32px;
     }
 
     .categorize-transaction-item .info {
-        flex: 1;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
         min-width: 0;
         overflow: hidden;
     }
@@ -2348,42 +2349,27 @@
         font-size: 20px;
         font-weight: 700;
         color: #000000;
-        margin-bottom: 4px;
         line-height: 1.2;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        flex: 1;
+        min-width: 0;
     }
 
     .categorize-transaction-item .time {
         font-size: 16px;
         font-weight: 400;
         color: #B8B8BD;
-    }
-
-    .categorize-transaction-item .icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        background: rgba(255, 255, 255, 0.5);
         margin-left: 16px;
-    }
-
-    .categorize-transaction-item .icon-emoji {
-        font-size: 28px;
-        opacity: 0.4;
-        line-height: 1;
+        flex-shrink: 0;
     }
 
     .categorize-transaction-item .card-bottom {
         display: flex;
         flex-direction: row;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-end;
         width: 100%;
     }
 
