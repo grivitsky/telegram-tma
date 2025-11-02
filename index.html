@@ -340,8 +340,10 @@
                     <div class="insights-date-range">1 NOV - TODAY</div>
                     <div class="insights-totals">
                         <div class="insights-total-spent">
-                            <div id="insights-total-currency" class="insights-currency-label">PLN</div>
-                            <div class="insights-amount-value">0,00</div>
+                            <div class="insights-total-value">
+                                <span id="insights-total-currency" class="insights-currency-label">PLN</span>
+                                <span class="insights-amount-value">0,00</span>
+                            </div>
                         </div>
                         <div class="insights-per-day">
                             <div class="insights-per-day-label">SPENT/DAY</div>
@@ -1946,19 +1948,22 @@
 
                 // Calculate per day spending
                 const now = new Date();
-                const start = now.getDate();
                 let daysInPeriod = 1;
                 
                 switch (insightsPeriod) {
                     case 'week':
-                        daysInPeriod = Math.ceil((now.getTime() - new Date(now.getFullYear(), now.getMonth(), start - now.getDay() + (now.getDay() === 0 ? -6 : 1)).getTime()) / (1000 * 60 * 60 * 24));
+                        // Calculate days from Monday to today
+                        const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                        const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert Sunday to 6
+                        daysInPeriod = mondayOffset + 1; // Add 1 to include today
                         break;
                     case 'month':
-                        daysInPeriod = now.getDate();
+                        daysInPeriod = now.getDate(); // Day of month (1-31)
                         break;
                     case 'year':
                         const yearStart = new Date(now.getFullYear(), 0, 1);
-                        daysInPeriod = Math.ceil((now.getTime() - yearStart.getTime()) / (1000 * 60 * 60 * 24));
+                        const msDiff = now.getTime() - yearStart.getTime();
+                        daysInPeriod = Math.floor(msDiff / (1000 * 60 * 60 * 24)) + 1; // +1 to include today
                         break;
                 }
                 
@@ -2015,11 +2020,13 @@
                         const percentage = total > 0 ? (cat.amount / total) * 100 : 0;
                         const item = document.createElement('div');
                         item.className = 'insights-category-item';
+                        // Capitalize first letter of category name
+                        const capitalizedName = cat.name.charAt(0).toUpperCase() + cat.name.slice(1);
                         item.innerHTML = `
                             <div class="insights-category-icon" style="background-color: ${cat.color}">
                                 <span class="insights-category-emoji">${cat.emoji}</span>
                             </div>
-                            <div class="insights-category-name">${cat.name}</div>
+                            <div class="insights-category-name">${capitalizedName}</div>
                             <div class="insights-category-percentage">${percentage.toFixed(1)}%</div>
                         `;
                         insightsCategoriesList.appendChild(item);
@@ -2466,11 +2473,33 @@
     }
 
     .insights-period-dropdown.dropdown-open {
-        animation: dropdownGrowDown 0.2s ease-out forwards;
+        animation: dropdownGrowDownRight 0.2s ease-out forwards;
     }
 
     .insights-period-dropdown.dropdown-close {
-        animation: dropdownGrowUp 0.2s ease-in forwards;
+        animation: dropdownGrowUpRight 0.2s ease-in forwards;
+    }
+
+    @keyframes dropdownGrowDownRight {
+        from {
+            opacity: 0;
+            transform: scaleY(0);
+        }
+        to {
+            opacity: 1;
+            transform: scaleY(1);
+        }
+    }
+
+    @keyframes dropdownGrowUpRight {
+        from {
+            opacity: 1;
+            transform: scaleY(1);
+        }
+        to {
+            opacity: 0;
+            transform: scaleY(0);
+        }
     }
 
     .insights-summary {
@@ -2494,6 +2523,12 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    .insights-total-value {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
     }
 
     .insights-per-day {
@@ -2522,7 +2557,7 @@
     }
 
     .insights-amount-value {
-        font-size: 50px;
+        font-size: 32px;
         font-weight: 600;
         color: #000000;
         line-height: 1.2;
@@ -2541,8 +2576,6 @@
     .insights-chart {
         width: 100%;
         height: 32px;
-        border-radius: 8px;
-        overflow: hidden;
         display: flex;
     }
 
@@ -2550,23 +2583,16 @@
         display: flex;
         width: 100%;
         height: 100%;
+        gap: 4px;
+        border-radius: 8px;
+        overflow: hidden;
     }
 
     .insights-chart-bar {
         height: 100%;
-        transition: width 0.3s ease;
-    }
-
-    .insights-chart-bar:first-child {
-        border-radius: 8px 0 0 8px;
-    }
-
-    .insights-chart-bar:last-child {
-        border-radius: 0 8px 8px 0;
-    }
-
-    .insights-chart-bar:only-child {
+        min-width: 24px;
         border-radius: 8px;
+        transition: width 0.3s ease;
     }
 
     .insights-categories-section {
@@ -2599,8 +2625,8 @@
     }
 
     .insights-category-icon {
-        width: 32px;
-        height: 32px;
+        width: 64px;
+        height: 64px;
         border-radius: 8px;
         display: flex;
         align-items: center;
@@ -2609,7 +2635,7 @@
     }
 
     .insights-category-emoji {
-        font-size: 22px;
+        font-size: 32px;
         line-height: 1;
     }
 
