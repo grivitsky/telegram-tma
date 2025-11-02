@@ -2090,7 +2090,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 16px 20px;
+        padding: 24px 20px 16px 20px;
         position: relative;
     }
 
@@ -2109,20 +2109,20 @@
     }
 
     .edit-close-button {
-        background-color: #E0E0E0;
+        background-color: #F6F6F6;
     }
 
     .edit-close-button:active {
-        background-color: #D0D0D0;
+        background-color: #E8E8E8;
         transform: scale(0.95);
     }
 
     .edit-delete-button {
-        background-color: #FE473A;
+        background-color: #FFD4D1;
     }
 
     .edit-delete-button:active {
-        background-color: #E53935;
+        background-color: #FFC4C1;
         transform: scale(0.95);
     }
 
@@ -2132,11 +2132,15 @@
         display: block;
     }
 
+    .edit-delete-button .edit-icon {
+        filter: none; /* Reset any filters to show original icon color */
+    }
+
     .edit-title {
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
-        font-size: 18px;
+        font-size: 24px;
         font-weight: 700;
         color: #000000;
         margin: 0;
@@ -2172,10 +2176,10 @@
     }
 
     .edit-backspace-button {
-        width: 32px;
-        height: 32px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
-        background-color: #E0E0E0;
+        background-color: #F6F6F6;
         border: none;
         cursor: pointer;
         display: flex;
@@ -2188,7 +2192,7 @@
     }
 
     .edit-backspace-button:active {
-        background-color: #D0D0D0;
+        background-color: #E8E8E8;
         transform: scale(0.95);
     }
 
