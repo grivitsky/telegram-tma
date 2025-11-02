@@ -2079,10 +2079,11 @@
         background: #ffffff;
         width: 100%;
         max-width: 600px;
-        min-height: 100vh;
+        height: 100vh;
         display: flex;
         flex-direction: column;
         position: relative;
+        overflow: hidden;
     }
 
     /* Header */
@@ -2149,7 +2150,7 @@
     /* Amount Section */
     .edit-amount-section {
         padding: 20px;
-        padding-bottom: 16px;
+        padding-bottom: 12px;
     }
 
     .edit-amount-wrapper {
@@ -2205,7 +2206,7 @@
     /* Name Section */
     .edit-name-section {
         padding: 0 20px;
-        padding-bottom: 24px;
+        padding-bottom: 16px;
     }
 
     .edit-name-button {
@@ -2259,8 +2260,8 @@
     /* Custom Keyboard */
     .edit-keyboard {
         margin-top: auto;
-        padding: 20px;
-        padding-bottom: max(24px, calc(env(safe-area-inset-bottom) + 24px));
+        padding: 16px 20px;
+        padding-bottom: max(16px, calc(env(safe-area-inset-bottom) + 16px));
         display: flex;
         flex-direction: column;
         gap: 12px;
@@ -2274,13 +2275,12 @@
 
     .keyboard-key {
         flex: 1;
-        aspect-ratio: 1;
+        aspect-ratio: 108 / 72;
         max-width: calc(33.333% - 8px);
-        min-height: 60px;
-        background-color: #E0E0E0;
+        background-color: #F6F6F6;
         border: none;
         border-radius: 12px;
-        font-size: 24px;
+        font-size: 40px;
         font-weight: 600;
         color: #000000;
         cursor: pointer;
@@ -2293,22 +2293,22 @@
     }
 
     .keyboard-key:active {
-        background-color: #D0D0D0;
+        background-color: #E8E8E8;
         transform: scale(0.95);
     }
 
     .keyboard-save {
-        background-color: #1F1F1F;
+        background-color: #3C3C3C;
     }
 
     .keyboard-save:active {
-        background-color: #000000;
+        background-color: #2C2C2C;
         transform: scale(0.95);
     }
 
     .keyboard-save-icon {
-        width: 24px;
-        height: 24px;
+        width: 48px;
+        height: 48px;
         display: block;
         filter: brightness(0) invert(1); /* Make icon white */
     }
