@@ -1454,6 +1454,7 @@
         let uncategorizedSpendings = [];
         let categories = [];
         let currentSpendingIndex = 0;
+        let isNewCardAfterCategory = false;
 
         const categorizeTransaction = document.getElementById('categorize-transaction');
         const categorizeButtons = document.getElementById('categorize-buttons');
@@ -1552,16 +1553,21 @@
                 `;
                 button.addEventListener('click', () => assignCategory(category.id));
                 categorizeButtons.appendChild(button);
-                
-                // Trigger reveal animation with stagger effect
-                setTimeout(() => {
-                    button.classList.remove('categorize-button-hidden');
-                    button.classList.add('categorize-button-reveal');
-                }, index * 30); // 30ms delay between each button
             });
             
             // Ensure buttons container is visible
             if (categorizeButtons) categorizeButtons.style.display = 'flex';
+            
+            // Trigger reveal animation with stagger effect after DOM update
+            requestAnimationFrame(() => {
+                const allButtons = categorizeButtons.querySelectorAll('.category-button');
+                allButtons.forEach((button, index) => {
+                    setTimeout(() => {
+                        button.classList.remove('categorize-button-hidden');
+                        button.classList.add('categorize-button-reveal');
+                    }, index * 40); // 40ms delay between each button for more noticeable stagger
+                });
+            });
         }
 
         function updateCounter() {
@@ -1624,8 +1630,13 @@
             const spending = uncategorizedSpendings[currentSpendingIndex];
             const transDate = new Date(spending.created_at || spending.date_of_log);
             
+            // Use flag to determine if card should animate from bottom
+            const shouldAnimateFromBottom = isNewCardAfterCategory;
+            isNewCardAfterCategory = false; // Reset flag after use
+            const animationClass = shouldAnimateFromBottom ? 'categorize-card-hidden-from-bottom' : 'categorize-card-hidden';
+            
             categorizeTransaction.innerHTML = `
-                <div class="categorize-transaction-item categorize-card-hidden" id="current-transaction-card">
+                <div class="categorize-transaction-item ${animationClass}" id="current-transaction-card">
                     <div class="card-top">
                         <div class="info">
                             <div class="name">${spending.name || 'Unnamed'}</div>
@@ -1645,12 +1656,17 @@
             categorizeTransaction.style.display = 'block';
             updateCounter();
             
-            // Trigger reveal animation
+            // Trigger reveal animation - from bottom if after category, from slight offset if initial load
             setTimeout(() => {
                 const currentCard = document.getElementById('current-transaction-card');
                 if (currentCard) {
-                    currentCard.classList.remove('categorize-card-hidden');
-                    currentCard.classList.add('categorize-card-reveal');
+                    if (shouldAnimateFromBottom) {
+                        currentCard.classList.remove('categorize-card-hidden-from-bottom');
+                        currentCard.classList.add('categorize-card-reveal-from-bottom');
+                    } else {
+                        currentCard.classList.remove('categorize-card-hidden');
+                        currentCard.classList.add('categorize-card-reveal');
+                    }
                 }
             }, 50);
         }
@@ -1662,7 +1678,10 @@
                 return;
             }
             
-            currentCard.classList.add('swipe-out-left');
+            // Remove any existing animation classes
+            currentCard.classList.remove('categorize-card-reveal', 'categorize-card-reveal-from-bottom', 'categorize-card-hidden');
+            // Add upward animation
+            currentCard.classList.add('swipe-out-up');
             
             setTimeout(() => {
                 callback();
@@ -1716,6 +1735,9 @@
                     }
                 }
 
+                // Set flag to indicate next card should animate from bottom
+                isNewCardAfterCategory = true;
+                
                 // Animate card out and move to next transaction
                 fadeOutCard(() => {
                     // Remove the categorized item from the array
@@ -2444,6 +2466,22 @@
 
     .categorize-transaction-item.swipe-out-left {
         opacity: 0;
+        transform: translateY(-100%);
+    }
+
+    .categorize-transaction-item.swipe-out-up {
+        animation: categorizeCardOutUp 0.3s ease-out forwards;
+    }
+
+    @keyframes categorizeCardOutUp {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-100%);
+        }
     }
 
     .categorize-transaction-item .card-top {
@@ -3519,14 +3557,34 @@
         transform: translateY(12px);
     }
 
+    .categorize-card-hidden-from-bottom {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+
     .categorize-card-reveal {
         animation: categorizeCardReveal 0.4s ease-out forwards;
+    }
+
+    .categorize-card-reveal-from-bottom {
+        animation: categorizeCardRevealFromBottom 0.4s ease-out forwards;
     }
 
     @keyframes categorizeCardReveal {
         from {
             opacity: 0;
             transform: translateY(12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes categorizeCardRevealFromBottom {
+        from {
+            opacity: 0;
+            transform: translateY(100%);
         }
         to {
             opacity: 1;
