@@ -1629,7 +1629,6 @@
 
         function displayNextTransaction() {
             const categorizeContainer = document.getElementById('categorize-container');
-            const contentEl = document.getElementById('content');
             
             if (currentSpendingIndex >= uncategorizedSpendings.length) {
                 // All transactions categorized
@@ -1637,14 +1636,12 @@
                 categorizeCategoriesSection.style.display = 'none';
                 categorizeComplete.style.display = 'flex';
                 if (categorizeContainer) categorizeContainer.classList.add('showing-complete');
-                if (contentEl) contentEl.classList.add('showing-complete');
                 updateCounter();
                 return;
             }
             
             // Reset container height when showing transactions
             if (categorizeContainer) categorizeContainer.classList.remove('showing-complete');
-            if (contentEl) contentEl.classList.remove('showing-complete');
 
             const spending = uncategorizedSpendings[currentSpendingIndex];
             const transDate = new Date(spending.created_at || spending.date_of_log);
@@ -2415,20 +2412,10 @@
         padding: 0;
     }
 
-    /* When showing complete, adjust parent content padding */
-    #content.showing-complete {
-        padding: 0;
-        padding-bottom: 0;
-        overflow: hidden;
-        height: calc(100vh - 80px);
-        min-height: calc(100vh - 80px);
-        max-height: calc(100vh - 80px);
-    }
-
     #categorize-container.showing-complete {
-        height: 100%;
-        min-height: 100%;
-        max-height: 100%;
+        height: 100vh;
+        min-height: 100vh;
+        max-height: 100vh;
         overflow: hidden;
     }
 
