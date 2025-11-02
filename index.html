@@ -1025,12 +1025,47 @@
             const nameValue = spending.name || '';
             editNameInput.value = nameValue;
             
+            // Function to resize input based on content
+            const resizeInput = () => {
+                const value = editNameInput.value || editNameInput.placeholder;
+                const tempSpan = document.createElement('span');
+                tempSpan.style.font = window.getComputedStyle(editNameInput).font;
+                tempSpan.style.fontSize = '16px';
+                tempSpan.style.visibility = 'hidden';
+                tempSpan.style.position = 'absolute';
+                tempSpan.textContent = value || 'Transaction name';
+                document.body.appendChild(tempSpan);
+                const width = tempSpan.offsetWidth + 4; // Add small buffer
+                document.body.removeChild(tempSpan);
+                editNameInput.style.width = Math.max(80, width) + 'px';
+            };
+            
+            // Initial resize
+            resizeInput();
+            
+            // Resize on input
+            editNameInput.addEventListener('input', resizeInput);
+            
             // Prevent keyboard from causing viewport jumps
-            editNameInput.addEventListener('focus', (e) => {
-                e.preventDefault();
-                // Scroll popup to top to ensure stable layout
+            editNameInput.addEventListener('focus', () => {
+                // Lock the popup height to current viewport
+                const currentHeight = window.innerHeight;
+                editOverlay.style.height = `${currentHeight}px`;
                 editOverlay.scrollTop = 0;
-            }, { once: true });
+                
+                // Prevent body scroll
+                document.body.style.position = 'fixed';
+                document.body.style.width = '100%';
+                document.body.style.top = '0';
+            });
+            
+            editNameInput.addEventListener('blur', () => {
+                // Restore normal height
+                editOverlay.style.height = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+                document.body.style.top = '';
+            });
             
             // Initialize category display
             const category = spending.categories || spending.category || null;
@@ -2291,13 +2326,13 @@
         width: 100%;
         max-width: 600px;
         height: 100vh;
-        height: 100dvh; /* Use dynamic viewport height */
         display: flex;
         flex-direction: column;
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
+        bottom: 0;
         overflow: hidden;
         justify-content: space-between;
         transform: translateY(100%);
@@ -2450,18 +2485,20 @@
     .edit-name-section {
         padding: 0 20px;
         padding-bottom: 16px;
+        display: flex;
+        justify-content: center;
     }
 
     .edit-name-wrapper {
-        width: 100%;
         padding: 4px 10px;
         background-color: #FFFFFF;
         border: 1px solid #DADADA;
-        border-radius: 8px;
-        display: flex;
+        border-radius: 12px;
+        display: inline-flex;
         align-items: center;
         gap: 8px;
         transition: border-color 0.2s;
+        max-width: 100%;
     }
 
     .edit-name-wrapper:focus-within {
@@ -2476,7 +2513,6 @@
     }
 
     .edit-name-input {
-        flex: 1;
         padding: 0;
         font-size: 16px;
         border: none;
@@ -2484,6 +2520,8 @@
         color: #000000;
         font-family: 'Nunito', sans-serif;
         font-weight: 400;
+        min-width: 80px;
+        width: auto;
     }
 
     .edit-name-input::placeholder {
@@ -2679,6 +2717,8 @@
         .edit-name-section {
             padding: 0 20px;
             padding-bottom: 12px;
+            display: flex;
+            justify-content: center;
         }
 
         .edit-name-wrapper {
@@ -2749,6 +2789,8 @@
         .edit-name-section {
             padding: 0 20px;
             padding-bottom: 8px;
+            display: flex;
+            justify-content: center;
         }
 
         .edit-name-wrapper {
