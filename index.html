@@ -1025,6 +1025,13 @@
             const nameValue = spending.name || '';
             editNameInput.value = nameValue;
             
+            // Prevent keyboard from causing viewport jumps
+            editNameInput.addEventListener('focus', (e) => {
+                e.preventDefault();
+                // Scroll popup to top to ensure stable layout
+                editOverlay.scrollTop = 0;
+            }, { once: true });
+            
             // Initialize category display
             const category = spending.categories || spending.category || null;
             updateCategoryDisplay(category);
@@ -2266,7 +2273,7 @@
         align-items: flex-start;
         justify-content: center;
         z-index: 2000;
-        overflow-y: auto;
+        overflow: hidden;
         opacity: 0;
         transition: opacity 0.3s ease-out;
     }
@@ -2284,9 +2291,13 @@
         width: 100%;
         max-width: 600px;
         height: 100vh;
+        height: 100dvh; /* Use dynamic viewport height */
         display: flex;
         flex-direction: column;
-        position: relative;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
         overflow: hidden;
         justify-content: space-between;
         transform: translateY(100%);
@@ -2390,6 +2401,7 @@
         display: flex;
         align-items: baseline;
         gap: 8px;
+        margin-right: -12px;
     }
 
     .edit-currency-label {
@@ -2442,17 +2454,18 @@
 
     .edit-name-wrapper {
         width: 100%;
-        padding: 16px;
-        background-color: #F5F5F5;
-        border-radius: 12px;
+        padding: 4px 10px;
+        background-color: #FFFFFF;
+        border: 1px solid #DADADA;
+        border-radius: 8px;
         display: flex;
         align-items: center;
-        gap: 12px;
-        transition: background-color 0.2s;
+        gap: 8px;
+        transition: border-color 0.2s;
     }
 
     .edit-name-wrapper:focus-within {
-        background-color: #EBEBEB;
+        border-color: #BABABA;
     }
 
     .edit-name-icon {
@@ -2479,6 +2492,7 @@
 
     .edit-name-input:focus {
         outline: none;
+        transform: translateZ(0); /* Force GPU acceleration to prevent reflows */
     }
 
     /* Bottom Section: Category + Keyboard */
@@ -2668,7 +2682,7 @@
         }
 
         .edit-name-wrapper {
-            padding: 12px;
+            padding: 4px 10px;
         }
 
         .edit-keyboard {
@@ -2738,7 +2752,7 @@
         }
 
         .edit-name-wrapper {
-            padding: 10px;
+            padding: 4px 10px;
         }
 
         .edit-keyboard {
