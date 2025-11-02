@@ -173,11 +173,10 @@
                     
                     <!-- Transaction Name Field -->
                     <div class="edit-name-section">
-                        <button id="edit-name-button" class="edit-name-button">
+                        <div class="edit-name-wrapper">
                             <img src="/assets/AA.svg" alt="Name" class="edit-name-icon" />
-                            <span class="edit-name-placeholder" id="edit-name-display">Name</span>
-                        </button>
-                        <input type="text" id="edit-name" class="edit-name-input" placeholder="Transaction name" style="display: none;" />
+                            <input type="text" id="edit-name" class="edit-name-input" placeholder="Transaction name" />
+                        </div>
                     </div>
                 </div>
                 
@@ -837,8 +836,6 @@
         const editAmountDisplay = document.getElementById('edit-amount-display');
         const editCurrencyLabel = document.getElementById('edit-currency-label');
         const editNameInput = document.getElementById('edit-name');
-        const editNameButton = document.getElementById('edit-name-button');
-        const editNameDisplay = document.getElementById('edit-name-display');
         const editCategoryButton = document.getElementById('edit-category-button');
         const editCategoryEmoji = document.getElementById('edit-category-emoji');
         const editCategoryName = document.getElementById('edit-category-name');
@@ -1024,15 +1021,9 @@
             // Set currency label
             editCurrencyLabel.textContent = currentCurrencyCode;
             
-            // Initialize name display
+            // Initialize name input
             const nameValue = spending.name || '';
             editNameInput.value = nameValue;
-            editNameDisplay.textContent = nameValue || 'Name';
-            editNameDisplay.style.color = nameValue ? '#000000' : '#A6A6A6';
-            
-            // Hide name input initially
-            editNameInput.style.display = 'none';
-            editNameButton.style.display = 'flex';
             
             // Initialize category display
             const category = spending.categories || spending.category || null;
@@ -1171,39 +1162,7 @@
             backspaceButton.addEventListener('click', handleBackspace);
         }
 
-        // Name field interaction
-        if (editNameButton && editNameInput) {
-            editNameButton.addEventListener('click', () => {
-                editNameButton.style.display = 'none';
-                editNameInput.style.display = 'block';
-                editNameInput.focus();
-                
-                // Haptic feedback
-                if (tgWebApp && tgWebApp.HapticFeedback) {
-                    try {
-                        tgWebApp.HapticFeedback.impactOccurred('light');
-                    } catch (e) {
-                        if (tgWebApp.impactOccurred) {
-                            tgWebApp.impactOccurred('light');
-                        }
-                    }
-                }
-            });
-
-            editNameInput.addEventListener('blur', () => {
-                const value = editNameInput.value.trim();
-                editNameDisplay.textContent = value || 'Name';
-                editNameDisplay.style.color = value ? '#000000' : '#A6A6A6';
-                editNameInput.style.display = 'none';
-                editNameButton.style.display = 'flex';
-            });
-
-            editNameInput.addEventListener('input', () => {
-                const value = editNameInput.value;
-                editNameDisplay.textContent = value || 'Name';
-                editNameDisplay.style.color = value ? '#000000' : '#A6A6A6';
-            });
-        }
+        // Name input is always visible, no additional setup needed
 
         // Close popup when clicking X button
         if (closeEditButton) {
@@ -2421,18 +2380,16 @@
 
     .edit-amount-wrapper {
         display: flex;
-        align-items: baseline;
-        gap: 8px;
+        align-items: center;
+        justify-content: center;
         position: relative;
-        justify-content: space-between;
+        padding-right: 56px; /* Space for backspace button */
     }
 
     .edit-amount-content {
         display: flex;
         align-items: baseline;
         gap: 8px;
-        flex: 1;
-        justify-content: center;
     }
 
     .edit-currency-label {
@@ -2447,11 +2404,11 @@
         font-weight: 600;
         color: #000000;
         line-height: 1;
-        flex: 1;
-        min-width: 0;
     }
 
     .edit-backspace-button {
+        position: absolute;
+        right: 0;
         width: 48px;
         height: 48px;
         border-radius: 50%;
@@ -2483,23 +2440,19 @@
         padding-bottom: 16px;
     }
 
-    .edit-name-button {
+    .edit-name-wrapper {
         width: 100%;
         padding: 16px;
         background-color: #F5F5F5;
-        border: none;
         border-radius: 12px;
         display: flex;
         align-items: center;
         gap: 12px;
-        cursor: pointer;
-        transition: background-color 0.2s, transform 0.1s;
-        text-align: left;
+        transition: background-color 0.2s;
     }
 
-    .edit-name-button:active {
-        background-color: #E8E8E8;
-        transform: scale(0.98);
+    .edit-name-wrapper:focus-within {
+        background-color: #EBEBEB;
     }
 
     .edit-name-icon {
@@ -2509,26 +2462,23 @@
         flex-shrink: 0;
     }
 
-    .edit-name-placeholder {
-        font-size: 16px;
-        font-weight: 400;
-        color: #A6A6A6;
-    }
-
     .edit-name-input {
-        width: 100%;
-        padding: 12px 16px;
+        flex: 1;
+        padding: 0;
         font-size: 16px;
         border: none;
-        border-radius: 12px;
-        background: #F5F5F5;
+        background: transparent;
         color: #000000;
         font-family: 'Nunito', sans-serif;
+        font-weight: 400;
+    }
+
+    .edit-name-input::placeholder {
+        color: #A6A6A6;
     }
 
     .edit-name-input:focus {
         outline: none;
-        background: #EBEBEB;
     }
 
     /* Bottom Section: Category + Keyboard */
@@ -2717,7 +2667,7 @@
             padding-bottom: 12px;
         }
 
-        .edit-name-button {
+        .edit-name-wrapper {
             padding: 12px;
         }
 
@@ -2746,7 +2696,7 @@
 
     /* Prevent double-tap zoom on interactive elements */
     button, .clickable-pill, .tab-item, .keyboard-key, 
-    .edit-header-button, .edit-backspace-button, .edit-name-button {
+    .edit-header-button, .edit-backspace-button, .edit-name-wrapper, .edit-name-input {
         touch-action: manipulation;
     }
 
@@ -2787,7 +2737,7 @@
             padding-bottom: 8px;
         }
 
-        .edit-name-button {
+        .edit-name-wrapper {
             padding: 10px;
         }
 
