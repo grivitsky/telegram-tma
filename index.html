@@ -1555,8 +1555,8 @@
                         </div>
                     </div>
                     <div class="card-bottom">
-                        <span class="amount-label">Amount:</span>
-                        <span class="amount">-${formatAmount(Math.abs(Number(spending.amount)))} ${currentCurrencyCode}</span>
+                        <div class="amount-label">Amount:</div>
+                        <div class="amount">-${formatAmount(Math.abs(Number(spending.amount)))} ${currentCurrencyCode}</div>
                     </div>
                 </div>
             `;
@@ -2333,12 +2333,14 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
+        width: 100%;
         margin-bottom: 32px;
     }
 
     .categorize-transaction-item .info {
         flex: 1;
         min-width: 0;
+        overflow: hidden;
     }
 
     .categorize-transaction-item .name {
@@ -2347,6 +2349,9 @@
         color: #000000;
         margin-bottom: 4px;
         line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .categorize-transaction-item .time {
@@ -2375,9 +2380,9 @@
 
     .categorize-transaction-item .card-bottom {
         display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 8px;
+        flex-direction: column;
+        width: 100%;
+        gap: 4px;
     }
 
     .categorize-transaction-item .amount-label {
@@ -2385,6 +2390,7 @@
         font-weight: 600;
         color: #A6A6A6;
         line-height: 1;
+        text-align: left;
     }
 
     .categorize-transaction-item .amount {
@@ -2392,6 +2398,7 @@
         font-weight: 650;
         color: #000000;
         line-height: 1;
+        text-align: left;
     }
 
     .categorize-categories-section {
