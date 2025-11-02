@@ -1571,12 +1571,16 @@
                 categorizeCategoriesSection.style.display = 'none';
                 categorizeComplete.style.display = 'flex';
                 if (categorizeContainer) categorizeContainer.classList.add('showing-complete');
-                updateCounter();
+                // Hide counter to avoid redundant "Yay!" message (complete state already says "You're all set!")
+                if (categorizeCounter) categorizeCounter.style.display = 'none';
                 return;
             }
             
             // Reset container height when showing transactions
             if (categorizeContainer) categorizeContainer.classList.remove('showing-complete');
+            
+            // Show counter again when displaying transactions
+            if (categorizeCounter) categorizeCounter.style.display = '';
 
             const spending = uncategorizedSpendings[currentSpendingIndex];
             const transDate = new Date(spending.created_at || spending.date_of_log);
