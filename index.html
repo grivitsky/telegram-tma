@@ -154,40 +154,45 @@
                     <button id="delete-button" class="edit-header-button edit-delete-button">
                         <img src="/assets/delete.svg" alt="Delete" class="edit-icon" />
                     </button>
-                    </div>
+                </div>
                 
-                <!-- Amount Display -->
-                <div class="edit-amount-section">
-                    <div class="edit-amount-wrapper">
-                        <span class="edit-currency-label" id="edit-currency-label">PLN</span>
-                        <span class="edit-amount-display" id="edit-amount-display">0,00</span>
-                        <button id="backspace-button" class="edit-backspace-button">
-                            <img src="/assets/backspace.svg" alt="Backspace" class="edit-backspace-icon" />
+                <!-- Middle Content: Amount + Name (Centered) -->
+                <div class="edit-middle-content">
+                    <!-- Amount Display -->
+                    <div class="edit-amount-section">
+                        <div class="edit-amount-wrapper">
+                            <span class="edit-currency-label" id="edit-currency-label">PLN</span>
+                            <span class="edit-amount-display" id="edit-amount-display">0,00</span>
+                            <button id="backspace-button" class="edit-backspace-button">
+                                <img src="/assets/backspace.svg" alt="Backspace" class="edit-backspace-icon" />
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Transaction Name Field -->
+                    <div class="edit-name-section">
+                        <button id="edit-name-button" class="edit-name-button">
+                            <img src="/assets/AA.svg" alt="Name" class="edit-name-icon" />
+                            <span class="edit-name-placeholder" id="edit-name-display">Name</span>
                         </button>
+                        <input type="text" id="edit-name" class="edit-name-input" placeholder="Transaction name" style="display: none;" />
                     </div>
                 </div>
                 
-                <!-- Transaction Name Field -->
-                <div class="edit-name-section">
-                    <button id="edit-name-button" class="edit-name-button">
-                        <img src="/assets/AA.svg" alt="Name" class="edit-name-icon" />
-                        <span class="edit-name-placeholder" id="edit-name-display">Name</span>
-                    </button>
-                    <input type="text" id="edit-name" class="edit-name-input" placeholder="Transaction name" style="display: none;" />
-                </div>
-                
-                <!-- Category Selection -->
-                <div class="edit-category-section">
-                    <button id="edit-category-button" class="edit-category-button">
-                        <span class="edit-category-emoji" id="edit-category-emoji">❓</span>
-                        <span class="edit-category-name" id="edit-category-name">Uncategorized</span>
-                    </button>
-                    <div id="edit-category-dropdown" class="edit-category-dropdown" style="display: none;">
-                        <!-- Categories will be populated here -->
+                <!-- Bottom Section: Category + Keyboard -->
+                <div class="edit-bottom-section">
+                    <!-- Category Selection -->
+                    <div class="edit-category-section">
+                        <button id="edit-category-button" class="edit-category-button">
+                            <span class="edit-category-emoji" id="edit-category-emoji">❔</span>
+                            <span class="edit-category-name" id="edit-category-name">Uncategorized</span>
+                        </button>
+                        <div id="edit-category-dropdown" class="edit-category-dropdown" style="display: none;">
+                            <!-- Categories will be populated here -->
+                        </div>
                     </div>
-                </div>
-                
-                <!-- Custom Numeric Keyboard -->
+                    
+                    <!-- Custom Numeric Keyboard -->
                 <div class="edit-keyboard">
                     <div class="keyboard-row">
                         <button class="keyboard-key" data-key="1">1</button>
@@ -211,6 +216,7 @@
                             <img src="/assets/check-done.svg" alt="Done" class="keyboard-save-icon" />
                         </button>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -895,7 +901,7 @@
                 editCategoryButton.style.backgroundColor = hexToRgba(category.color, 0.24);
                 currentSelectedCategoryId = category.id;
             } else {
-                editCategoryEmoji.textContent = '❓';
+                editCategoryEmoji.textContent = '❔';
                 editCategoryName.textContent = 'Uncategorized';
                 editCategoryName.style.color = '#757575';
                 editCategoryButton.style.backgroundColor = 'rgba(158, 158, 158, 0.24)';
@@ -2295,6 +2301,7 @@
         flex-direction: column;
         position: relative;
         overflow: hidden;
+        justify-content: space-between;
     }
 
     /* Header */
@@ -2358,9 +2365,18 @@
         margin: 0;
     }
 
+    /* Middle Content Section (Amount + Name) */
+    .edit-middle-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 20px 0;
+    }
+
     /* Amount Section */
     .edit-amount-section {
-        padding: 20px;
+        padding: 0 20px;
         padding-bottom: 12px;
     }
 
@@ -2468,6 +2484,11 @@
         border-color: #42A5F5;
     }
 
+    /* Bottom Section: Category + Keyboard */
+    .edit-bottom-section {
+        flex-shrink: 0;
+    }
+
     /* Category Selection */
     .edit-category-section {
         padding: 0 20px;
@@ -2504,6 +2525,7 @@
         font-weight: 600;
         color: #1976D2;
         flex: 1;
+        text-transform: capitalize;
     }
 
     .edit-category-dropdown {
@@ -2547,13 +2569,13 @@
         font-size: 16px;
         font-weight: 600;
         flex: 1;
+        text-transform: capitalize;
     }
 
     /* Custom Keyboard */
     .edit-keyboard {
-        margin-top: auto;
         margin-bottom: 4vh;
-        padding: 16px 20px;
+        padding: 0 20px 16px 20px;
         padding-bottom: max(16px, calc(env(safe-area-inset-bottom) + 16px));
         display: flex;
         flex-direction: column;
