@@ -627,7 +627,7 @@
     }
 
     .tab-item.active {
-        color: #1F1F1F;
+        color: #3D3D3D;
     }
 
     .ripple {
@@ -654,6 +654,17 @@
         justify-content: center;
     }
 
+    /* Non-active tabs: light gray (#DADADA) */
+    .tab-icon {
+        filter: brightness(0) saturate(100%) invert(87%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(102%) contrast(92%);
+    }
+
+    /* Active tabs: dark gray (#3D3D3D) */
+    .tab-item.active .tab-icon {
+        filter: brightness(0) saturate(100%) invert(24%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(95%) contrast(95%);
+    }
+
+    /* Legacy support for inline SVGs if any */
     .tab-icon path {
         fill: currentColor;
     }
