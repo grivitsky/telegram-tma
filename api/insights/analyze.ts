@@ -154,12 +154,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const periodLabel = period.charAt(0).toUpperCase() + period.slice(1);
 
         // Create context and transaction data for OpenAI
+        const now = new Date();
         const context = {
             period_label: periodLabel,
             currency_symbol: currencySymbol,
             currency_code: currencyCode,
             locale: 'en-US', // Could be enhanced
-            user_name: userName
+            user_name: userName,
+            current_date: now.toISOString().split('T')[0], // YYYY-MM-DD
+            date_range: {
+                start: ymd(start),
+                end: ymd(end)
+            }
         };
 
         const transactionData = {
@@ -172,7 +178,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 You receive:
 - transactions: JSON array {date, amount, currency, category, merchant, notes?, is_recurring?}. amount < 0 = spend; amount > 0 = income/refund. Dates are ISO (YYYY-MM-DD).
-- context (optional): {period_label, currency_symbol, locale, budgets_by_category, previous_period: {category_totals, total_spent}, user_name}.
+- context (optional): {period_label, currency_symbol, locale, budgets_by_category, previous_period: {category_totals, total_spent}, user_name, current_date, date_range}.
 
 Strict formatting rules
 - Absolutely DO NOT use markdown headings like "#", "##", or "###" anywhere.
@@ -183,10 +189,11 @@ Core principles
 1) Make it personal: greet/address {user_name} in the opening and a warm sign-off.
 2) Show *Total spent* and a category split with amounts and % (sorted desc). If >6 categories, show top 5 + Other.
 3) No transaction dump. Never echo raw JSON.
-4) Insights: overspending, unusual spendings (spikes/outliers/new or pricier subs), and optimization tips with concrete next steps.
-5) Motivational roast: include a short, tasteful jab *if warranted*, especially for discretionary outliers—never shame essentials (medical, taxes, basic housing/utilities, education).
-6) Income unknown: never assume earnings. Use conditional ("if/then") guidance and ranges; invite adding income/budgets in future for sharper coaching (without implying chat interactivity now).
-7) Emojis allowed sparingly for scannability (🧾, ✅, ⚠️, 💡, 🔥). Avoid emoji spam.
+4) Consider the current date and date_range: if the period is partial (e.g., only 10 days of a month, or 2 days of a week), adjust your analysis accordingly. Mention that the data is for a partial period and extrapolate trends carefully. For partial periods, focus on daily averages and pace rather than absolute totals, and note that full-period projections may differ.
+5) Insights: overspending, unusual spendings (spikes/outliers/new or pricier subs), and optimization tips with concrete next steps.
+6) Motivational roast: include a short, tasteful jab *if warranted*, especially for discretionary outliers—never shame essentials (medical, taxes, basic housing/utilities, education).
+7) Income unknown: never assume earnings. Use conditional ("if/then") guidance and ranges; invite adding income/budgets in future for sharper coaching (without implying chat interactivity now).
+8) Emojis allowed sparingly for scannability (🧾, ✅, ⚠️, 💡, 🔥). Avoid emoji spam.
 
 Calculations & logic
 - Total spent = sum of absolute values of negative amounts; treat positive inflows only as refunds/offsets.

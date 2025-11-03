@@ -1969,7 +1969,7 @@
                     const originalText = analyzeAiButton.textContent;
                     analyzeAiButton.textContent = 'Processing...';
 
-                    // Fire and forget - user can leave the app
+                    // Fire request and handle response
                     fetch('/api/insights/analyze', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1977,6 +1977,27 @@
                             initData: tg.initData,
                             period: insightsPeriod
                         })
+                    }).then(async (res) => {
+                        const data = await res.json();
+                        if (res.ok && data.ok) {
+                            // Success - show "Done! Check DM"
+                            analyzeAiButton.textContent = 'Done! Check DM';
+                            
+                            // Reset to original text after 2 seconds
+                            setTimeout(() => {
+                                analyzeAiButton.textContent = originalText;
+                                analyzeAiButton.disabled = false;
+                            }, 2000);
+                        } else {
+                            // Error response
+                            console.error('AI analysis error:', data.error);
+                            analyzeAiButton.textContent = originalText;
+                            analyzeAiButton.disabled = false;
+                            
+                            if (tgWebApp && tgWebApp.showAlert) {
+                                tgWebApp.showAlert(data.error || 'Failed to analyze transactions');
+                            }
+                        }
                     }).catch(err => {
                         console.error('AI analysis error', err);
                         // Reset button on error so user can try again
@@ -1987,12 +2008,6 @@
                             tgWebApp.showAlert('Failed to analyze transactions. Please try again.');
                         }
                     });
-
-                    // Reset button after a delay (user can leave, but if they stay, button resets)
-                    setTimeout(() => {
-                        analyzeAiButton.textContent = originalText;
-                        analyzeAiButton.disabled = false;
-                    }, 3000);
 
                 } catch (err) {
                     console.error('AI analysis error', err);
