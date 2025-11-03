@@ -1900,45 +1900,35 @@
                         return;
                     }
 
-                    // Disable button and show loading state
+                    // Disable button and show processing state
                     analyzeAiButton.disabled = true;
                     const originalText = analyzeAiButton.textContent;
-                    analyzeAiButton.textContent = 'Analyzing...';
+                    analyzeAiButton.textContent = 'Processing...';
 
-                    const res = await fetch('/api/insights/analyze', {
+                    // Fire and forget - user can leave the app
+                    fetch('/api/insights/analyze', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
                             initData: tg.initData,
                             period: insightsPeriod
                         })
-                    });
-
-                    const data = await res.json();
-
-                    if (!res.ok) {
-                        console.error('AI analysis error:', data.error);
+                    }).catch(err => {
+                        console.error('AI analysis error', err);
+                        // Reset button on error so user can try again
                         analyzeAiButton.textContent = originalText;
                         analyzeAiButton.disabled = false;
                         
-                        // Show error message (you might want to show a toast or alert)
                         if (tgWebApp && tgWebApp.showAlert) {
-                            tgWebApp.showAlert(data.error || 'Failed to analyze transactions');
+                            tgWebApp.showAlert('Failed to analyze transactions. Please try again.');
                         }
-                        return;
-                    }
+                    });
 
-                    // Success - show message
-                    analyzeAiButton.textContent = 'Analysis sent!';
-                    if (tgWebApp && tgWebApp.showAlert) {
-                        tgWebApp.showAlert('Analysis sent to your Telegram chat! 📊');
-                    }
-                    
-                    // Reset button after 2 seconds
+                    // Reset button after a delay (user can leave, but if they stay, button resets)
                     setTimeout(() => {
                         analyzeAiButton.textContent = originalText;
                         analyzeAiButton.disabled = false;
-                    }, 2000);
+                    }, 3000);
 
                 } catch (err) {
                     console.error('AI analysis error', err);
