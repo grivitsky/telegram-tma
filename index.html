@@ -1758,6 +1758,35 @@
                     return;
                 }
 
+                // Check AI features status
+                let aiFeaturesEnabled = false;
+                try {
+                    const userRes = await fetch('/api/auth/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ initData: tg.initData })
+                    });
+                    if (userRes.ok) {
+                        const userData = await userRes.json();
+                        if (userData.ok && userData.user) {
+                            aiFeaturesEnabled = userData.user.ai_features_enabled === true;
+                        }
+                    }
+                } catch (err) {
+                    console.error('Failed to check AI features status:', err);
+                }
+
+                // Update AI button state
+                const analyzeAiButton = document.getElementById('analyze-ai-button');
+                if (analyzeAiButton) {
+                    analyzeAiButton.disabled = !aiFeaturesEnabled;
+                    if (!aiFeaturesEnabled) {
+                        analyzeAiButton.title = 'AI features are not enabled. Please enable them in settings.';
+                    } else {
+                        analyzeAiButton.title = '';
+                    }
+                }
+
                 const res = await fetch('/api/spendings/list', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
