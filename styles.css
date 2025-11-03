@@ -267,6 +267,36 @@
         gap: 12px;
     }
 
+    .analyze-ai-button {
+        width: 100%;
+        margin-top: 24px;
+        padding: 16px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #ffffff;
+        background-color: #000000;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: background-color 0.2s, opacity 0.2s;
+        user-select: none;
+        font-family: 'Nunito', sans-serif;
+    }
+
+    .analyze-ai-button:hover {
+        background-color: #333333;
+    }
+
+    .analyze-ai-button:active {
+        background-color: #555555;
+    }
+
+    .analyze-ai-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background-color: #666666;
+    }
+
     .insights-category-item {
         display: flex;
         align-items: center;

@@ -241,7 +241,7 @@
         <div class="tab-content" data-tab="2">
             <div class="insights-container">
                 <div class="insights-header">
-                    <h2 class="page-title insights-title">Insights1</h2>
+                    <h2 class="page-title insights-title">Insights</h2>
                     <div class="insights-period-dropdown-container">
                         <div id="insights-period-pill" class="insights-period-pill clickable-pill">
                             <span class="pill-text">month</span>
@@ -294,6 +294,8 @@
                     <div class="insights-divider"></div>
                     <div id="insights-categories-list" class="insights-categories-list"></div>
                 </div>
+                
+                <button id="analyze-ai-button" class="analyze-ai-button">Analyse with AI</button>
             </div>
         </div>
         
@@ -1886,6 +1888,68 @@
             } catch (err) {
                 console.error('loadInsights error', err);
             }
+        }
+
+        // AI Analysis button handler
+        const analyzeAiButton = document.getElementById('analyze-ai-button');
+        if (analyzeAiButton) {
+            analyzeAiButton.addEventListener('click', async () => {
+                try {
+                    if (!tg || !tg.initData) {
+                        console.warn('No initData for AI analysis');
+                        return;
+                    }
+
+                    // Disable button and show loading state
+                    analyzeAiButton.disabled = true;
+                    const originalText = analyzeAiButton.textContent;
+                    analyzeAiButton.textContent = 'Analyzing...';
+
+                    const res = await fetch('/api/insights/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            initData: tg.initData,
+                            period: insightsPeriod
+                        })
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        console.error('AI analysis error:', data.error);
+                        analyzeAiButton.textContent = originalText;
+                        analyzeAiButton.disabled = false;
+                        
+                        // Show error message (you might want to show a toast or alert)
+                        if (tgWebApp && tgWebApp.showAlert) {
+                            tgWebApp.showAlert(data.error || 'Failed to analyze transactions');
+                        }
+                        return;
+                    }
+
+                    // Success - show message
+                    analyzeAiButton.textContent = 'Analysis sent!';
+                    if (tgWebApp && tgWebApp.showAlert) {
+                        tgWebApp.showAlert('Analysis sent to your Telegram chat! 📊');
+                    }
+                    
+                    // Reset button after 2 seconds
+                    setTimeout(() => {
+                        analyzeAiButton.textContent = originalText;
+                        analyzeAiButton.disabled = false;
+                    }, 2000);
+
+                } catch (err) {
+                    console.error('AI analysis error', err);
+                    analyzeAiButton.disabled = false;
+                    analyzeAiButton.textContent = 'Analyse with AI';
+                    
+                    if (tgWebApp && tgWebApp.showAlert) {
+                        tgWebApp.showAlert('Failed to analyze transactions. Please try again.');
+                    }
+                }
+            });
         }
 
         // Store insights load function so it can be called when switching tabs
