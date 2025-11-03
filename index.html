@@ -610,6 +610,41 @@
                     showSkeletons();
                 }
 
+                // Ensure user exists in database (create if new user)
+                console.log('➡️ Verifying/creating user via /api/auth/verify');
+                try {
+                    const userRes = await fetch('/api/auth/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ initData: tg.initData })
+                    });
+                    if (!userRes.ok) {
+                        const errorText = await userRes.text();
+                        let errorMsg = 'Failed to verify user';
+                        try {
+                            const errorData = JSON.parse(errorText);
+                            errorMsg = errorData.error || errorMsg;
+                        } catch (e) {
+                            errorMsg = `HTTP ${userRes.status}: ${errorText || 'Unknown error'}`;
+                        }
+                        setError(errorMsg);
+                        hideSkeletons();
+                        return;
+                    }
+                    const userData = await userRes.json();
+                    if (!userData.ok || !userData.user) {
+                        setError('Failed to verify user');
+                        hideSkeletons();
+                        return;
+                    }
+                    console.log('✅ User verified/created:', userData.user.id);
+                } catch (err) {
+                    console.error('Failed to verify user:', err);
+                    setError('Failed to verify user');
+                    hideSkeletons();
+                    return;
+                }
+
                 console.log('➡️ Fetching /api/spendings/list with period:', currentPeriod);
                 const res = await fetch('/api/spendings/list', {
                     method: 'POST',
