@@ -1602,7 +1602,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 48px 20px 24px;
+        padding: 24px 20px 16px 20px;
         box-sizing: border-box;
     }
 
@@ -1667,7 +1667,7 @@
     /* Currency List */
     .currency-wrapper {
         position: absolute;
-        top: 111px;
+        top: 88px;
         left: 50%;
         transform: translateX(-50%);
         width: 390px;
