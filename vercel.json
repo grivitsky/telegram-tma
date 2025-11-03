@@ -1,12 +1,12 @@
 {
   "version": 2,
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "/styles.css", "dest": "/styles.css" },
-    { "src": "/tabs.js", "dest": "/tabs.js" },
-    { "src": "/main.js", "dest": "/main.js" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/styles.css", "destination": "/styles.css" },
+    { "source": "/tabs.js", "destination": "/tabs.js" },
+    { "source": "/main.js", "destination": "/main.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
