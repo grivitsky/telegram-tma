@@ -894,10 +894,10 @@
         // Load categories for edit popup
         async function loadEditCategories() {
             try {
-                const res = await fetch('/api/categories/list', {
+                const res = await fetch('/api/lists', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ initData: tg.initData })
+                    body: JSON.stringify({ initData: tg.initData, type: 'categories' })
                 });
 
                 const data = await res.json();
@@ -1445,10 +1445,10 @@
                 // Show category skeleton
                 showCategoriesSkeleton();
                 
-                const res = await fetch('/api/categories/list', {
+                const res = await fetch('/api/lists', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ initData: tg.initData })
+                    body: JSON.stringify({ initData: tg.initData, type: 'categories' })
                 });
 
                 const data = await res.json();
@@ -2049,10 +2049,10 @@
 
         loadCurrentCurrency = async function() {
             try {
-                const res = await fetch('/api/currencies/list', {
+                const res = await fetch('/api/lists', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ initData: tg.initData })
+                    body: JSON.stringify({ initData: tg.initData, type: 'currencies' })
                 });
 
                 const data = await res.json();
@@ -2118,10 +2118,10 @@
 
         async function loadCurrencies() {
             try {
-                const res = await fetch('/api/currencies/list', {
+                const res = await fetch('/api/lists', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ initData: tg.initData })
+                    body: JSON.stringify({ initData: tg.initData, type: 'currencies' })
                 });
 
                 const data = await res.json();
