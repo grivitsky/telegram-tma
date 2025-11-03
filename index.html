@@ -6,7 +6,7 @@
     <title>Budget Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="/tabs.js"></script>
@@ -340,23 +340,32 @@
         
         <!-- Currency Selection Page -->
         <div id="currency-selection-page" class="currency-selection-page" style="display: none;">
-            <div class="currency-page-header">
-                <button class="currency-back-button" id="currency-back-button">
-                    <svg class="back-chevron-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g clip-path="url(#clip0_15_710)">
-                            <path d="M6.3105 12.4766C6.3105 12.2324 6.4082 12.0078 6.5938 11.832L14.3281 4.25391C14.5039 4.08789 14.7187 4 14.9727 4C15.4707 4 15.8613 4.38086 15.8613 4.88867C15.8613 5.13281 15.7637 5.35742 15.6074 5.52344L8.49805 12.4766L15.6074 19.4297C15.7637 19.5957 15.8613 19.8105 15.8613 20.0645C15.8613 20.5723 15.4707 20.9531 14.9727 20.9531C14.7187 20.9531 14.5039 20.8652 14.3281 20.6895L6.5938 13.1211C6.4082 12.9355 6.3105 12.7207 6.3105 12.4766Z" fill="currentColor"/>
-                        </g>
-                        <defs>
-                            <clipPath id="clip0_15_710">
-                                <rect width="11.6895" height="16.9629" fill="white" transform="matrix(-1 0 0 1 18 4)"/>
-                            </clipPath>
-                        </defs>
-                    </svg>
-                </button>
-                <h2 class="currency-page-title">Currencies</h2>
-            </div>
-            <div class="currency-list" id="currency-list">
-                <!-- Currency items will be populated here -->
+            <div class="currencies-page">
+                <!-- Header -->
+                <div class="currency-page-header">
+                    <div class="currency-back-button" id="currency-back-button">
+                        <div class="back-icon">
+                            <div class="chevron-group">
+                                <svg fill="none" preserveAspectRatio="none" viewBox="0 0 9 13">
+                                    <g>
+                                        <path d="M8.76712 6.35742C8.76712 6.17431 8.69385 6.00586 8.55465 5.87402L2.75391 0.19043C2.62207 0.065918 2.46094 0 2.2705 0C1.89697 0 1.604 0.285644 1.604 0.666504C1.604 0.849607 1.67725 1.01806 1.79444 1.14258L7.12646 6.35742L1.79444 11.5723C1.67725 11.6968 1.604 11.8579 1.604 12.0484C1.604 12.4292 1.89697 12.7148 2.2705 12.7148C2.46094 12.7148 2.62207 12.6489 2.75391 12.5171L8.55465 6.84082C8.69385 6.70166 8.76712 6.54052 8.76712 6.35742Z" fill="#A6A6A6"/>
+                                    </g>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="currency-page-title">Currencies</div>
+                    <div class="spacer"></div>
+                </div>
+
+                <!-- Currency List -->
+                <div class="currency-wrapper">
+                    <div class="currency-container">
+                        <div class="currency-list" id="currency-list">
+                            <!-- Currency items will be populated here -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2216,16 +2225,25 @@
                 item.setAttribute('data-currency-id', currency.id);
                 
                 item.innerHTML = `
-                    <div class="currency-item-content">
-                        <div class="currency-item-left">
-                            <span class="currency-code">${currency.code}</span>
-                            <span class="currency-name">${currency.name}</span>
+                    <div class="currency-info">
+                        <span class="currency-code">${currency.code}</span>
+                        <span class="currency-name">${currency.name}</span>
+                    </div>
+                    <div class="checkmark-container">
+                        <div class="checkmark">
+                            ${isSelected ? `
+                                <svg fill="none" preserveAspectRatio="none" viewBox="0 0 18 18">
+                                    <g>
+                                        <path d="M6.36719 17.2363C6.78711 17.2363 7.11914 17.0508 7.35352 16.6895L16.582 2.1582C16.7578 1.875 16.8262 1.66016 16.8262 1.43555C16.8262 0.898438 16.4746 0.546875 15.9375 0.546875C15.5469 0.546875 15.332 0.673828 15.0977 1.04492L6.32812 15.0195L1.77734 9.0625C1.5332 8.7207 1.28906 8.58398 0.9375 8.58398C0.380859 8.58398 0 8.96484 0 9.50195C0 9.72656 0.0976562 9.98047 0.283203 10.2148L5.35156 16.6699C5.64453 17.0508 5.94727 17.2363 6.36719 17.2363Z" fill="black"/>
+                                    </g>
+                                </svg>
+                            ` : `
+                                <svg fill="none" preserveAspectRatio="none" viewBox="0 0 18 18">
+                                    <g>
+                                    </g>
+                                </svg>
+                            `}
                         </div>
-                        ${isSelected ? `
-                            <svg class="checkmark-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/>
-                            </svg>
-                        ` : ''}
                     </div>
                 `;
                 
