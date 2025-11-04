@@ -10,3 +10,4 @@ WHERE ai_features_enabled IS NULL;
 -- Create index for faster lookups when filtering by AI features status
 CREATE INDEX IF NOT EXISTS idx_users_ai_features_enabled ON users(ai_features_enabled);
 
+-- test
