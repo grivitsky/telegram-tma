@@ -1,15 +1,11 @@
 {
   "version": 2,
-  "cleanUrls": true,
   "rewrites": [
     { "source": "/assets/(.*)", "destination": "/assets/$1" },
     { "source": "/styles.css", "destination": "/styles.css" },
     { "source": "/tabs.js", "destination": "/tabs.js" },
-    { "source": "/main.js", "destination": "/main.js" }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    { "source": "/main.js", "destination": "/main.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
